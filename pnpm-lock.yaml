@@ -104,6 +104,9 @@ importers:
       '@tiptap/extension-font-family':
         specifier: ^3.27.0
         version: 3.27.0(@tiptap/extension-text-style@3.27.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0)))
+      '@tiptap/extension-font-size':
+        specifier: 3.0.0-next.3
+        version: 3.0.0-next.3(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/extension-text-style@3.27.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0)))
       '@tiptap/extension-image':
         specifier: ^3.27.0
         version: 3.27.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))
@@ -2728,6 +2731,13 @@ packages:
     resolution: {integrity: sha512-cK+5R6KoOoxXmwbA03RYZS7G0//DovLNV/6mhgYPIuO/tNXXcwMGOxUKmMC2aUr95aL00EqGtsX4JotRyBVvXg==}
     peerDependencies:
       '@tiptap/extension-text-style': 3.27.0
+
+  '@tiptap/extension-font-size@3.0.0-next.3':
+    resolution: {integrity: sha512-JmmrCboLvDH4HG1nOAMkiwmeFluliXaeEh5+RDxOofuzxsHjSYVJpNP846eLtMnjkUAxjvh7tBz7GTjATm3OuQ==}
+    deprecated: This package is no longer maintained. Please use the new @tiptap/extension-text-style package.
+    peerDependencies:
+      '@tiptap/core': ^3.0.0-next.3
+      '@tiptap/extension-text-style': ^3.0.0-next.3
 
   '@tiptap/extension-gapcursor@3.26.0':
     resolution: {integrity: sha512-SIe68SDwx2fozt/XKG0FhCwzz/yRN6Bvo4D5TqvfDg6NK3PQb1DS4GN9PilmJqbY+kXryuiWEEJOWi7HpO8SuQ==}
@@ -9256,6 +9266,11 @@ snapshots:
 
   '@tiptap/extension-font-family@3.27.0(@tiptap/extension-text-style@3.27.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0)))':
     dependencies:
+      '@tiptap/extension-text-style': 3.27.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))
+
+  '@tiptap/extension-font-size@3.0.0-next.3(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/extension-text-style@3.27.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0)))':
+    dependencies:
+      '@tiptap/core': 3.26.0(@tiptap/pm@3.26.0)
       '@tiptap/extension-text-style': 3.27.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))
 
   '@tiptap/extension-gapcursor@3.26.0(@tiptap/extensions@3.26.0(@tiptap/core@3.26.0(@tiptap/pm@3.26.0))(@tiptap/pm@3.26.0))':
