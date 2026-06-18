@@ -19,6 +19,7 @@ import {
   ChevronDown,
   FileCode,
   Table,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -224,6 +225,21 @@ function NotesShell() {
     setShowNewCategory(false);
   }
 
+  function deleteCustomCategory(category: string) {
+    if (DEFAULT_CATEGORIES.includes(category)) return;
+    const next = customCategories.filter((c) => c !== category);
+    setCustomCategories(next);
+    localStorage.setItem(CATEGORY_KEY, JSON.stringify(next));
+    if (activeCategory === category) {
+      setActiveCategory('默认');
+    }
+    toast.success(`已删除分类「${category}」`);
+  }
+
+  function isCustomCategory(category: string): boolean {
+    return !DEFAULT_CATEGORIES.includes(category);
+  }
+
   async function handleExport(format: 'json' | 'csv' | 'pdf') {
     setExportMenuOpen(false);
     try {
@@ -372,6 +388,8 @@ function NotesShell() {
               count={categoryCounts.get(cat) ?? 0}
               active={activeCategory === cat}
               onClick={() => setActiveCategory(cat)}
+              canDelete={isCustomCategory(cat)}
+              onDelete={() => deleteCustomCategory(cat)}
             />
           ))}
 
@@ -655,16 +673,20 @@ function CategoryButton({
   count,
   active,
   onClick,
+  onDelete,
+  canDelete,
 }: {
   label: string;
   count: number;
   active: boolean;
   onClick: () => void;
+  onDelete?: () => void;
+  canDelete?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-all border ${
+      className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-all border group ${
         active
           ? 'bg-accent/60 border-border text-foreground'
           : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/30'
@@ -672,9 +694,19 @@ function CategoryButton({
     >
       <span className="flex items-center gap-2">
         <Folder size={12} />
-        {label}
+        <span className="truncate max-w-[100px]">{label}</span>
       </span>
-      <span className="text-[10px] text-muted-foreground font-mono-pretty">{count}</span>
+      <span className="flex items-center gap-1">
+        <span className="text-[10px] text-muted-foreground font-mono-pretty">{count}</span>
+        {canDelete && onDelete && (
+          <span
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="opacity-0 group-hover:opacity-100 ml-1 p-0.5 rounded hover:bg-destructive/20 hover:text-destructive transition-opacity"
+          >
+            <X size={12} />
+          </span>
+        )}
+      </span>
     </button>
   );
 }

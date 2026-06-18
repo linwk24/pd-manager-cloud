@@ -8,6 +8,7 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { FontFamily } from '@tiptap/extension-font-family';
 import { FontSize } from '@tiptap/extension-font-size';
+import { Typography } from '@tiptap/extension-typography';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
@@ -36,6 +37,8 @@ import {
   Minus,
   Maximize2,
   Minimize2,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
@@ -166,6 +169,24 @@ const MenuBar = ({ editor, isFullscreen, onFullscreenChange }: { editor: any; is
 
   return (
     <div className="flex items-center gap-0.5 px-3 py-2 border-b border-border bg-muted/30 flex-wrap shrink-0">
+      {/* 撤销/重做 */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().undo().run()}
+        disabled={!editor.can().undo()}
+        title="撤销 (Ctrl+Z)"
+      >
+        <Undo2 size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().redo().run()}
+        disabled={!editor.can().redo()}
+        title="重做 (Ctrl+Y)"
+      >
+        <Redo2 size={15} />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-border mx-1" />
+
       {/* 基础格式 */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -417,6 +438,7 @@ export function TipTapEditor({ content, onChange, placeholder, isFullscreen: ext
       TextStyle,
       FontFamily,
       FontSize,
+      Typography,
       Color,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
