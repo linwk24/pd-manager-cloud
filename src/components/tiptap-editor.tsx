@@ -6,6 +6,7 @@ import Underline from '@tiptap/extension-underline';
 import { TextAlign } from '@tiptap/extension-text-align';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
+import { FontFamily } from '@tiptap/extension-font-family';
 import { Table } from '@tiptap/extension-table';
 import { TableRow } from '@tiptap/extension-table-row';
 import { TableCell } from '@tiptap/extension-table-cell';
@@ -392,6 +393,7 @@ export function TipTapEditor({ content, onChange, placeholder }: TipTapEditorPro
       }),
       Underline,
       TextStyle,
+      FontFamily,
       Color,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
