@@ -3,6 +3,15 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
+import { TextAlign } from '@tiptap/extension-text-align';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { Color } from '@tiptap/extension-color';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { Link } from '@tiptap/extension-link';
+import { Image } from '@tiptap/extension-image';
 import {
   Bold,
   Italic,
@@ -14,8 +23,17 @@ import {
   ListOrdered,
   Code,
   Quote,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+  Link as LinkIcon,
+  Image as ImageIcon,
+  Table as TableIcon,
+  ChevronDown,
+  Minus,
 } from 'lucide-react';
-import { useCallback } from 'react';
+import { useState, useCallback } from 'react';
 
 interface TipTapEditorProps {
   content: string;
@@ -28,58 +46,340 @@ function ToolbarButton({
   active,
   children,
   title,
+  disabled,
 }: {
   onClick: () => void;
-  active: boolean;
+  active?: boolean;
   children: React.ReactNode;
   title: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       title={title}
       onClick={onClick}
+      disabled={disabled}
       className={`p-1.5 rounded transition-colors ${
         active
           ? 'bg-accent text-foreground'
           : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-      }`}
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       {children}
     </button>
   );
 }
 
+function SelectButton({
+  value,
+  onChange,
+  options,
+  title,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  title: string;
+}) {
+  return (
+    <select
+      title={title}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-7 px-1 text-xs bg-transparent border border-border rounded text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+    >
+      {options.map((opt) => (
+        <option key={opt.value} value={opt.value}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+const FONT_FAMILIES = [
+  { value: 'inherit', label: '默认' },
+  { value: 'serif', label: '宋体' },
+  { value: 'sans-serif', label: '黑体' },
+  { value: 'monospace', label: '等宽' },
+  { value: 'cursive', label: '手写' },
+];
+
+const FONT_SIZES = [
+  { value: '12px', label: '12' },
+  { value: '14px', label: '14' },
+  { value: '16px', label: '16' },
+  { value: '18px', label: '18' },
+  { value: '20px', label: '20' },
+  { value: '24px', label: '24' },
+  { value: '28px', label: '28' },
+  { value: '32px', label: '32' },
+  { value: '36px', label: '36' },
+];
+
 const MenuBar = ({ editor }: { editor: any }) => {
+  const [linkUrl, setLinkUrl] = useState('');
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [imageUrl, setImageUrl] = useState('');
+  const [showImageInput, setShowImageInput] = useState(false);
+
+  const setLink = useCallback(() => {
+    if (linkUrl) {
+      editor.chain().focus().setLink({ href: linkUrl }).run();
+    } else {
+      editor.chain().focus().unsetLink().run();
+    }
+    setShowLinkInput(false);
+    setLinkUrl('');
+  }, [editor, linkUrl]);
+
+  const insertImage = useCallback(() => {
+    if (imageUrl) {
+      editor.chain().focus().setImage({ src: imageUrl }).run();
+    }
+    setShowImageInput(false);
+    setImageUrl('');
+  }, [editor, imageUrl]);
+
+  const insertTable = useCallback(() => {
+    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+  }, [editor]);
+
   if (!editor) return null;
 
-  const buttons: ({ action: () => void; active: boolean; icon: React.ReactNode; title: string } | { type: 'divider' })[] = [
-    { action: () => editor.chain().focus().toggleBold().run(), active: editor.isActive('bold'), icon: <Bold size={15} />, title: '粗体' },
-    { action: () => editor.chain().focus().toggleItalic().run(), active: editor.isActive('italic'), icon: <Italic size={15} />, title: '斜体' },
-    { action: () => editor.chain().focus().toggleUnderline().run(), active: editor.isActive('underline'), icon: <UnderlineIcon size={15} />, title: '下划线' },
-    { action: () => editor.chain().focus().toggleStrike().run(), active: editor.isActive('strike'), icon: <Strikethrough size={15} />, title: '删除线' },
-    { type: 'divider' },
-    { action: () => editor.chain().focus().toggleHeading({ level: 1 }).run(), active: editor.isActive('heading', { level: 1 }), icon: <Heading1 size={15} />, title: '标题1' },
-    { action: () => editor.chain().focus().toggleHeading({ level: 2 }).run(), active: editor.isActive('heading', { level: 2 }), icon: <Heading2 size={15} />, title: '标题2' },
-    { type: 'divider' },
-    { action: () => editor.chain().focus().toggleBulletList().run(), active: editor.isActive('bulletList'), icon: <List size={15} />, title: '无序列表' },
-    { action: () => editor.chain().focus().toggleOrderedList().run(), active: editor.isActive('orderedList'), icon: <ListOrdered size={15} />, title: '有序列表' },
-    { action: () => editor.chain().focus().toggleBlockquote().run(), active: editor.isActive('blockquote'), icon: <Quote size={15} />, title: '引用' },
-    { action: () => editor.chain().focus().toggleCodeBlock().run(), active: editor.isActive('codeBlock'), icon: <Code size={15} />, title: '代码块' },
-  ];
+  const getCurrentFontSize = () => {
+    const size = editor.getAttributes('textStyle').fontSize;
+    return size || '16px';
+  };
+
+  const getCurrentFontFamily = () => {
+    const family = editor.getAttributes('textStyle').fontFamily;
+    return family || 'inherit';
+  };
 
   return (
     <div className="flex items-center gap-0.5 px-3 py-2 border-b border-border bg-muted/30 flex-wrap">
-      {buttons.map((btn, i) => {
-        if ('type' in btn) {
-          return <div key={i} className="w-px h-5 bg-border mx-1" />;
-        }
-        return (
-          <ToolbarButton key={i} onClick={btn.action} active={btn.active} title={btn.title}>
-            {btn.icon}
-          </ToolbarButton>
-        );
-      })}
+      {/* 基础格式 */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        active={editor.isActive('bold')}
+        title="粗体 (Ctrl+B)"
+      >
+        <Bold size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        active={editor.isActive('italic')}
+        title="斜体 (Ctrl+I)"
+      >
+        <Italic size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+        active={editor.isActive('underline')}
+        title="下划线 (Ctrl+U)"
+      >
+        <UnderlineIcon size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        active={editor.isActive('strike')}
+        title="删除线"
+      >
+        <Strikethrough size={15} />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* 字体 */}
+      <SelectButton
+        value={getCurrentFontFamily()}
+        onChange={(value) => editor.chain().focus().setFontFamily(value).run()}
+        options={FONT_FAMILIES}
+        title="字体"
+      />
+
+      {/* 字号 */}
+      <SelectButton
+        value={getCurrentFontSize()}
+        onChange={(value) => editor.chain().focus().setFontSize(value).run()}
+        options={FONT_SIZES}
+        title="字号"
+      />
+
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* 标题 */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+        active={editor.isActive('heading', { level: 1 })}
+        title="标题1"
+      >
+        <Heading1 size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+        active={editor.isActive('heading', { level: 2 })}
+        title="标题2"
+      >
+        <Heading2 size={15} />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* 对齐 */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('left').run()}
+        active={editor.isActive({ textAlign: 'left' })}
+        title="左对齐"
+      >
+        <AlignLeft size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('center').run()}
+        active={editor.isActive({ textAlign: 'center' })}
+        title="居中对齐"
+      >
+        <AlignCenter size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('right').run()}
+        active={editor.isActive({ textAlign: 'right' })}
+        title="右对齐"
+      >
+        <AlignRight size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+        active={editor.isActive({ textAlign: 'justify' })}
+        title="两端对齐"
+      >
+        <AlignJustify size={15} />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* 列表 */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBulletList().run()}
+        active={editor.isActive('bulletList')}
+        title="无序列表"
+      >
+        <List size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+        active={editor.isActive('orderedList')}
+        title="有序列表"
+      >
+        <ListOrdered size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().sinkListItem('listItem').run()}
+        title="减少缩进"
+      >
+        <Minus size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().liftListItem('listItem').run()}
+        title="增加缩进"
+      >
+        <ChevronDown size={15} className="rotate-180" />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* 引用和代码 */}
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+        active={editor.isActive('blockquote')}
+        title="引用"
+      >
+        <Quote size={15} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+        active={editor.isActive('codeBlock')}
+        title="代码块"
+      >
+        <Code size={15} />
+      </ToolbarButton>
+
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* 链接 */}
+      <div className="relative">
+        <ToolbarButton
+          onClick={() => setShowLinkInput(!showLinkInput)}
+          active={editor.isActive('link')}
+          title="链接"
+        >
+          <LinkIcon size={15} />
+        </ToolbarButton>
+        {showLinkInput && (
+          <div className="absolute top-full left-0 mt-1 p-2 bg-background border border-border rounded-md shadow-md z-10 flex gap-2">
+            <input
+              type="url"
+              placeholder="输入链接地址"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && setLink()}
+              className="px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button
+              onClick={setLink}
+              className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
+            >
+              确认
+            </button>
+            {editor.isActive('link') && (
+              <button
+                onClick={() => {
+                  editor.chain().focus().unsetLink().run();
+                  setShowLinkInput(false);
+                }}
+                className="px-2 py-1 text-xs border border-border rounded hover:bg-accent"
+              >
+                移除
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 图片 */}
+      <div className="relative">
+        <ToolbarButton
+          onClick={() => setShowImageInput(!showImageInput)}
+          title="图片"
+        >
+          <ImageIcon size={15} />
+        </ToolbarButton>
+        {showImageInput && (
+          <div className="absolute top-full left-0 mt-1 p-2 bg-background border border-border rounded-md shadow-md z-10 flex gap-2">
+            <input
+              type="url"
+              placeholder="输入图片地址"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && insertImage()}
+              className="px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+            <button
+              onClick={insertImage}
+              className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded hover:bg-primary/90"
+            >
+              插入
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* 表格 */}
+      <ToolbarButton onClick={insertTable} title="插入表格">
+        <TableIcon size={15} />
+      </ToolbarButton>
     </div>
   );
 };
@@ -91,6 +391,29 @@ export function TipTapEditor({ content, onChange, placeholder }: TipTapEditorPro
         heading: { levels: [1, 2] },
       }),
       Underline,
+      TextStyle,
+      Color,
+      TextAlign.configure({
+        types: ['heading', 'paragraph'],
+        alignments: ['left', 'center', 'right', 'justify'],
+      }),
+      Table.configure({
+        resizable: true,
+      }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-primary underline cursor-pointer',
+        },
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded',
+        },
+      }),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -98,7 +421,7 @@ export function TipTapEditor({ content, onChange, placeholder }: TipTapEditorPro
     },
     editorProps: {
       attributes: {
-        class: 'focus:outline-none min-h-[300px] px-4 py-3 text-sm leading-relaxed [&_h1]:text-xl [&_h1]:font-serif-display [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-serif-display [&_h2]:mb-2 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_pre]:bg-muted [&_pre]:rounded [&_pre]:p-3 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_code]:text-xs',
+        class: 'focus:outline-none min-h-[300px] px-4 py-3 text-sm leading-relaxed [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-2 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_li]:pl-2 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_pre]:bg-muted [&_pre]:rounded [&_pre]:p-3 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_code]:text-xs [&_table]:border-collapse [&_table]:w-full [&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:p-2 [&_th]:text-left [&_td]:border [&_td]:border-border [&_td]:p-2 [&_img]:max-w-full [&_img]:h-auto',
         placeholder: placeholder || '写下你的想法...',
       },
     },
