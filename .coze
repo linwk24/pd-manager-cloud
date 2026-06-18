@@ -1,0 +1,30 @@
+[project]
+sub_id = "f9572f57"
+name = "projects"
+requires = ["nodejs-24"]
+entrypoint = "dist/server.js"
+project_type = "web"
+
+[preview]
+preview_enable = "enabled"
+
+[dev]
+build = ["bash", "./scripts/prepare.sh"]
+run = ["bash", "./scripts/dev.sh"]
+validate = ["bash", "./scripts/validate.sh"]
+deps = ["git"]
+
+[deploy]
+build = ["bash", "./scripts/build.sh"]
+run = ["bash", "./scripts/start.sh"]
+deps = ["git"]
+
+[deploy.profile]
+kind = "service"
+flavor = "web"
+
+[deploy.backend]
+enabled = true
+
+[subprojects]
+path = ["."]

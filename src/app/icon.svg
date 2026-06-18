@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="8" y="6" width="48" height="52" rx="6" fill="oklch(0.23 0.025 65)"/>
+  <rect x="8" y="6" width="48" height="52" rx="6" fill="none" stroke="oklch(0.55 0.09 145)" stroke-width="2"/>
+  <path d="M22 30c0-5.5 4.5-10 10-10s10 4.5 10 10v6h-4v-6c0-3.3-2.7-6-6-6s-6 2.7-6 6v6h-4z" fill="oklch(0.75 0.12 70)"/>
+  <rect x="20" y="36" width="24" height="18" rx="3" fill="oklch(0.18 0.02 60)" stroke="oklch(0.75 0.12 70)" stroke-width="2"/>
+  <circle cx="32" cy="45" r="2.5" fill="oklch(0.75 0.12 70)"/>
+  <rect x="30" y="45" width="4" height="6" fill="oklch(0.75 0.12 70)"/>
+</svg>
