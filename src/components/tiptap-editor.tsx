@@ -34,6 +34,8 @@ import {
   Table as TableIcon,
   ChevronDown,
   Minus,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { useState, useCallback, useRef } from 'react';
 
@@ -41,6 +43,8 @@ interface TipTapEditorProps {
   content: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  isFullscreen?: boolean;
+  onFullscreenChange?: (isFullscreen: boolean) => void;
 }
 
 function ToolbarButton({
@@ -120,7 +124,7 @@ const FONT_SIZES = [
   { value: '36px', label: '36' },
 ];
 
-const MenuBar = ({ editor }: { editor: any }) => {
+const MenuBar = ({ editor, isFullscreen, onFullscreenChange }: { editor: any; isFullscreen?: boolean; onFullscreenChange?: (v: boolean) => void }) => {
   const [linkUrl, setLinkUrl] = useState('');
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
@@ -382,11 +386,28 @@ const MenuBar = ({ editor }: { editor: any }) => {
       <ToolbarButton onClick={insertTable} title="插入表格">
         <TableIcon size={15} />
       </ToolbarButton>
+
+      <div className="w-px h-5 bg-border mx-1" />
+
+      {/* 全屏切换 */}
+      <ToolbarButton
+        onClick={() => onFullscreenChange?.(!isFullscreen)}
+        title={isFullscreen ? '退出全屏' : '全屏编辑'}
+      >
+        {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+      </ToolbarButton>
     </div>
   );
 };
 
-export function TipTapEditor({ content, onChange, placeholder }: TipTapEditorProps) {
+export function TipTapEditor({ content, onChange, placeholder, isFullscreen: externalFullscreen, onFullscreenChange }: TipTapEditorProps) {
+  const [internalFullscreen, setInternalFullscreen] = useState(false);
+  const isFullscreen = externalFullscreen ?? internalFullscreen;
+  const setFullscreen = (v: boolean) => {
+    setInternalFullscreen(v);
+    onFullscreenChange?.(v);
+  };
+  
   const [editorHeight, setEditorHeight] = useState(300);
   const isDraggingRef = useRef(false);
   const startYRef = useRef(0);
@@ -464,18 +485,25 @@ export function TipTapEditor({ content, onChange, placeholder }: TipTapEditorPro
   });
 
   return (
-    <div className="border border-border rounded-md overflow-hidden bg-background flex flex-col">
-      <MenuBar editor={editor} />
-      <div className="flex-1 relative" style={{ minHeight: `${editorHeight}px` }}>
+    <div
+      className={`border border-border rounded-md overflow-hidden bg-background flex flex-col ${
+        isFullscreen ? 'fixed inset-0 z-50' : ''
+      }`}
+      style={isFullscreen ? { top: 0, left: 0, right: 0, bottom: 0 } : {}}
+    >
+      <MenuBar editor={editor} isFullscreen={isFullscreen} onFullscreenChange={setFullscreen} />
+      <div className="flex-1 relative" style={isFullscreen ? { height: 'calc(100vh - 45px)' } : { minHeight: `${editorHeight}px` }}>
         <EditorContent editor={editor} />
-        <div
-          className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize text-muted-foreground/30 hover:text-muted-foreground/60 p-0.5"
-          onMouseDown={handleMouseDown}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M14 14H10V10H14V14ZM14 6H10V2H14V6ZM6 14H2V10H6V14ZM6 6H2V2H6V6Z" />
-          </svg>
-        </div>
+        {!isFullscreen && (
+          <div
+            className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize text-muted-foreground/30 hover:text-muted-foreground/60 p-0.5"
+            onMouseDown={handleMouseDown}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M14 14H10V10H14V14ZM14 6H10V2H14V6ZM6 14H2V10H6V14ZM6 6H2V2H6V6Z" />
+            </svg>
+          </div>
+        )}
       </div>
     </div>
   );
