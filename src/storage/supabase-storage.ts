@@ -108,11 +108,18 @@ export const supabaseStorage: StorageBackend = {
   async listNotes(params?: { q?: string; category?: string }) {
     const token = params?.q;
     const client = getClient(token);
-    let query = client.from('notes').select('*').order('pinned', { ascending: false }).order('updated_at', { ascending: false });
+    let query = client.from('notes').select('*').is('deleted_at', null).order('pinned', { ascending: false }).order('updated_at', { ascending: false });
     if (params?.category && params.category !== '全部') {
       query = query.eq('category', params.category);
     }
     const { data, error } = await query;
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(toNote);
+  },
+
+  async listDeletedNotes() {
+    const client = getClient();
+    const { data, error } = await client.from('notes').select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map(toNote);
   },
@@ -140,6 +147,30 @@ export const supabaseStorage: StorageBackend = {
   async deleteNote(id: string) {
     const client = getClient();
     const { error } = await client.from('notes').delete().eq('id', id);
+    return !error;
+  },
+
+  async softDeleteNote(id: string) {
+    const client = getClient();
+    const { error } = await client.from('notes').update({ deleted_at: new Date().toISOString() }).eq('id', id).is('deleted_at', null);
+    return !error;
+  },
+
+  async restoreNote(id: string) {
+    const client = getClient();
+    const { error } = await client.from('notes').update({ deleted_at: null }).eq('id', id).not('deleted_at', 'is', null);
+    return !error;
+  },
+
+  async permanentlyDeleteNote(id: string) {
+    const client = getClient();
+    const { error } = await client.from('notes').delete().eq('id', id).not('deleted_at', 'is', null);
+    return !error;
+  },
+
+  async emptyTrash() {
+    const client = getClient();
+    const { error } = await client.from('notes').delete().not('deleted_at', 'is', null);
     return !error;
   },
 };

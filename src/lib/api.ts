@@ -124,6 +124,7 @@ export interface Note {
   content: string;
   category: string | null;
   pinned: boolean;
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -179,6 +180,50 @@ export async function deleteNote(id: string): Promise<void> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: '删除失败' }));
     throw new Error(err.error ?? '删除失败');
+  }
+}
+
+// ===== Trash (回收站) =====
+
+export async function softDeleteNote(id: string): Promise<void> {
+  const res = await authedFetch(`/api/notes/${id}?action=soft`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: '删除失败' }));
+    throw new Error(err.error ?? '删除失败');
+  }
+}
+
+export async function restoreNote(id: string): Promise<void> {
+  const res = await authedFetch(`/api/notes/${id}?action=restore`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: '恢复失败' }));
+    throw new Error(err.error ?? '恢复失败');
+  }
+}
+
+export async function permanentlyDeleteNote(id: string): Promise<void> {
+  const res = await authedFetch(`/api/notes/${id}?action=permanent`, { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: '永久删除失败' }));
+    throw new Error(err.error ?? '永久删除失败');
+  }
+}
+
+export async function listDeletedNotes(): Promise<Note[]> {
+  const res = await authedFetch('/api/notes/trash');
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: '获取回收站失败' }));
+    throw new Error(err.error ?? '获取回收站失败');
+  }
+  const { notes } = (await res.json()) as { notes: Note[] };
+  return notes;
+}
+
+export async function emptyTrash(): Promise<void> {
+  const res = await authedFetch('/api/notes/trash', { method: 'DELETE' });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: '清空回收站失败' }));
+    throw new Error(err.error ?? '清空回收站失败');
   }
 }
 

@@ -20,6 +20,12 @@ import {
   FileCode,
   Table,
   X,
+  Trash2Icon,
+  RotateCcw,
+  Check,
+  Square,
+  CheckSquare,
+  XCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -28,7 +34,7 @@ import { AuthGuard } from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TipTapEditor } from '@/components/tiptap-editor';
-import { Note, listNotes, createNote, updateNote, deleteNote, exportData, exportNote, importData } from '@/lib/api';
+import { Note, listNotes, createNote, updateNote, deleteNote, softDeleteNote, restoreNote, permanentlyDeleteNote, listDeletedNotes, emptyTrash, exportData, exportNote, importData } from '@/lib/api';
 import { Pagination } from '@/components/pagination';
 
 const CATEGORY_KEY = 'notes.customCategories.v1';
@@ -64,6 +70,15 @@ function NotesShell() {
   const [currentOffset, setCurrentOffset] = useState(0);
   const PAGE_SIZE = 50;
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Batch selection
+  const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode] = useState(false);
+
+  // Trash
+  const [showTrash, setShowTrash] = useState(false);
+  const [trashNotes, setTrashNotes] = useState<Note[]>([]);
+  const [confirmEmptyTrash, setConfirmEmptyTrash] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -181,12 +196,95 @@ function NotesShell() {
   async function handleDelete() {
     if (!confirmDelete) return;
     try {
-      await deleteNote(confirmDelete.id);
-      toast.success('已删除');
+      await softDeleteNote(confirmDelete.id);
+      toast.success('已移入回收站');
       setConfirmDelete(null);
       await refreshNotes();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '删除失败');
+    }
+  }
+
+  // Batch selection functions
+  function toggleSelectNote(id: string) {
+    const next = new Set(selectedNotes);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelectedNotes(next);
+  }
+
+  function toggleSelectAll() {
+    if (selectedNotes.size === filteredNotes.length) {
+      setSelectedNotes(new Set());
+    } else {
+      setSelectedNotes(new Set(filteredNotes.map((n) => n.id)));
+    }
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false);
+    setSelectedNotes(new Set());
+  }
+
+  async function batchDelete() {
+    if (selectedNotes.size === 0) return;
+    try {
+      for (const id of selectedNotes) {
+        await softDeleteNote(id);
+      }
+      toast.success(`已移入回收站 (${selectedNotes.size} 条)`);
+      setSelectedNotes(new Set());
+      setSelectMode(false);
+      await refreshNotes();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '批量删除失败');
+    }
+  }
+
+  // Trash functions
+  async function loadTrash() {
+    try {
+      const notes = await listDeletedNotes();
+      setTrashNotes(notes);
+      setShowTrash(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '获取回收站失败');
+    }
+  }
+
+  async function handleRestore(id: string) {
+    try {
+      await restoreNote(id);
+      toast.success('已恢复');
+      await loadTrash();
+      await refreshNotes();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '恢复失败');
+    }
+  }
+
+  async function handlePermanentDelete(id: string) {
+    try {
+      await permanentlyDeleteNote(id);
+      toast.success('已永久删除');
+      await loadTrash();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '永久删除失败');
+    }
+  }
+
+  async function handleEmptyTrash() {
+    try {
+      await emptyTrash();
+      toast.success('回收站已清空');
+      setConfirmEmptyTrash(false);
+      setShowTrash(false);
+      await refreshNotes();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : '清空失败');
     }
   }
 
@@ -288,6 +386,45 @@ function NotesShell() {
             <h1 className="font-serif-display text-lg tracking-wide">笔记</h1>
           </div>
           <div className="flex items-center gap-3">
+            {/* Trash button */}
+            <button
+              onClick={loadTrash}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider h-9 px-3 rounded-md border border-border bg-card/60 hover:bg-accent/40 flex items-center gap-1"
+            >
+              <Trash2Icon size={14} />
+              回收站
+            </button>
+
+            {/* Select mode button */}
+            <button
+              onClick={() => {
+                if (selectMode) {
+                  exitSelectMode();
+                } else {
+                  setSelectMode(true);
+                }
+              }}
+              className={`text-xs tracking-wider h-9 px-3 rounded-md border flex items-center gap-1 transition-colors ${
+                selectMode
+                  ? 'bg-primary text-primary-foreground border-primary'
+                  : 'text-muted-foreground hover:text-foreground border-border bg-card/60 hover:bg-accent/40'
+              }`}
+            >
+              {selectMode ? <X size={14} /> : <CheckSquare size={14} />}
+              {selectMode ? '取消' : '选择'}
+            </button>
+
+            {/* Batch delete button */}
+            {selectMode && selectedNotes.size > 0 && (
+              <button
+                onClick={batchDelete}
+                className="text-xs text-red-500 hover:text-red-600 transition-colors tracking-wider h-9 px-3 rounded-md border border-red-200 bg-red-50 hover:bg-red-100 flex items-center gap-1"
+              >
+                <Trash2 size={14} />
+                删除 ({selectedNotes.size})
+              </button>
+            )}
+
             {/* Export/Import dropdown */}
             <div className="relative">
               <button
@@ -446,15 +583,52 @@ function NotesShell() {
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {filteredNotes.map((note) => (
-                <NoteCard
-                  key={note.id}
-                  note={note}
-                  onEdit={() => openEdit(note)}
-                  onDelete={() => setConfirmDelete(note)}
-                  onTogglePin={() => togglePin(note)}
-                />
-              ))}
+              {/* Select all checkbox */}
+              {selectMode && filteredNotes.length > 0 && (
+                <div className="flex items-center gap-2 mb-2 px-1">
+                  <button
+                    onClick={toggleSelectAll}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {selectedNotes.size === filteredNotes.length ? (
+                      <CheckSquare size={18} className="text-primary" />
+                    ) : (
+                      <Square size={18} />
+                    )}
+                    <span>全选</span>
+                  </button>
+                  <span className="text-xs text-muted-foreground">
+                    已选择 {selectedNotes.size} 项
+                  </span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredNotes.map((note) => (
+                  <div key={note.id} className="relative group">
+                    {/* Selection checkbox */}
+                    {selectMode && (
+                      <button
+                        onClick={() => toggleSelectNote(note.id)}
+                        className="absolute top-3 left-3 z-10 p-1 bg-background/80 rounded"
+                      >
+                        {selectedNotes.has(note.id) ? (
+                          <CheckSquare size={20} className="text-primary" />
+                        ) : (
+                          <Square size={20} className="text-muted-foreground" />
+                        )}
+                      </button>
+                    )}
+                    <NoteCard
+                      note={note}
+                      onEdit={() => openEdit(note)}
+                      onDelete={() => setConfirmDelete(note)}
+                      onTogglePin={() => togglePin(note)}
+                      selectMode={selectMode}
+                    />
+                  </div>
+                ))}
+              </div>
 
               <Pagination
                 total={totalNotes}
@@ -555,6 +729,128 @@ function NotesShell() {
           </div>
         </div>
       )}
+
+      {/* Trash Modal */}
+      {showTrash && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowTrash(false)}
+        >
+          <div
+            className="w-full max-w-2xl max-h-[80vh] bg-card border border-border rounded-lg shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Trash2Icon size={20} className="text-muted-foreground" />
+                <h2 className="font-serif-display text-lg">回收站</h2>
+                <span className="text-sm text-muted-foreground">({trashNotes.length} 条)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {trashNotes.length > 0 && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setConfirmEmptyTrash(true)}
+                    className="text-xs"
+                  >
+                    <XCircle size={14} className="mr-1" />
+                    清空回收站
+                  </Button>
+                )}
+                <button
+                  onClick={() => setShowTrash(false)}
+                  className="p-1 rounded-md hover:bg-accent/40 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {trashNotes.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Trash2Icon size={48} className="mx-auto mb-4 opacity-30" />
+                  <p>回收站为空</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {trashNotes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="flex items-center gap-3 p-4 border border-border rounded-md bg-card/50 hover:bg-card/80 transition-colors group"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-serif-display text-sm truncate">
+                            {note.title || <span className="text-muted-foreground/50 italic">无标题</span>}
+                          </h3>
+                          {note.category && (
+                            <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0">
+                              {note.category}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground/60 mt-1">
+                          删除于 {new Date(note.deleted_at || note.updated_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRestore(note.id)}
+                          className="text-xs text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <RotateCcw size={14} className="mr-1" />
+                          恢复
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handlePermanentDelete(note.id)}
+                          className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                          <XCircle size={14} className="mr-1" />
+                          永久删除
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-border text-center">
+              <p className="text-xs text-muted-foreground">
+                回收站中的笔记将在 30 天后自动永久删除
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Empty Trash Confirm Modal */}
+      {confirmEmptyTrash && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setConfirmEmptyTrash(false)}
+        >
+          <div
+            className="w-full max-w-sm bg-card border border-border rounded-lg p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-serif-display text-base mb-2">清空回收站</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              确定要清空回收站吗？这将永久删除 {trashNotes.length} 条笔记，此操作不可恢复。
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setConfirmEmptyTrash(false)}>取消</Button>
+              <Button variant="destructive" size="sm" onClick={handleEmptyTrash}>确认清空</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -564,11 +860,13 @@ function NoteCard({
   onEdit,
   onDelete,
   onTogglePin,
+  selectMode = false,
 }: {
   note: Note;
   onEdit: () => void;
   onDelete: () => void;
   onTogglePin: () => void;
+  selectMode?: boolean;
 }) {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
@@ -582,7 +880,7 @@ function NoteCard({
   }
 
   return (
-    <div className="group border border-border rounded-md bg-card/50 hover:bg-card/80 transition-colors px-5 py-4">
+    <div className={`group border border-border rounded-md bg-card/50 hover:bg-card/80 transition-colors px-5 py-4 ${selectMode ? 'pl-12' : 'px-5'}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -604,6 +902,7 @@ function NoteCard({
             {new Date(note.updated_at).toLocaleString()}
           </p>
         </div>
+        {!selectMode && (
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
           <div className="relative">
             <IconButton
@@ -637,6 +936,7 @@ function NoteCard({
           <IconButton title="编辑" onClick={onEdit} icon={<Pencil size={14} />} />
           <IconButton title="删除" onClick={onDelete} icon={<Trash2 size={14} />} danger />
         </div>
+        )}
       </div>
     </div>
   );

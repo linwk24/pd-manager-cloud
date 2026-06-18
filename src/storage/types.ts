@@ -18,6 +18,7 @@ export interface NoteData {
   content: string;
   category: string | null;
   pinned: boolean;
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -49,4 +50,9 @@ export interface StorageBackend {
   createNote(data: Omit<NoteData, 'id' | 'created_at' | 'updated_at'> & { user_id: string }): Promise<NoteData>;
   updateNote(id: string, data: Partial<Omit<NoteData, 'id' | 'created_at' | 'updated_at'>>): Promise<NoteData | null>;
   deleteNote(id: string): Promise<boolean>;
+  softDeleteNote(id: string): Promise<boolean>;
+  restoreNote(id: string): Promise<boolean>;
+  permanentlyDeleteNote(id: string): Promise<boolean>;
+  listDeletedNotes(): Promise<NoteData[]>;
+  emptyTrash(): Promise<boolean>;
 }

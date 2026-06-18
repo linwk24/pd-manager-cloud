@@ -54,12 +54,14 @@ function initTables() {
       content TEXT NOT NULL DEFAULT '',
       category TEXT DEFAULT '默认',
       pinned INTEGER DEFAULT 0,
+      deleted_at TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id);
     CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category);
     CREATE INDEX IF NOT EXISTS idx_notes_pinned ON notes(pinned);
+    CREATE INDEX IF NOT EXISTS idx_notes_deleted ON notes(deleted_at);
   `);
 }
 
@@ -161,7 +163,7 @@ export const sqliteStorage: StorageBackend = {
   async listNotes(params) {
     const d = getDb();
     const userId = params?.q; // hack: 传 user_id
-    let sql = 'SELECT * FROM notes WHERE user_id = ?';
+    let sql = 'SELECT * FROM notes WHERE user_id = ? AND deleted_at IS NULL';
     const binds: any[] = [userId];
     if (params?.category && params.category !== '全部') {
       sql += ' AND category = ?';
@@ -169,6 +171,12 @@ export const sqliteStorage: StorageBackend = {
     }
     sql += ' ORDER BY pinned DESC, updated_at DESC';
     const rows = d.prepare(sql).all(...binds) as any[];
+    return rows.map(r => ({ ...r, pinned: !!r.pinned }));
+  },
+
+  async listDeletedNotes() {
+    const d = getDb();
+    const rows = d.prepare('SELECT * FROM notes WHERE user_id = ? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC').all('current') as any[];
     return rows.map(r => ({ ...r, pinned: !!r.pinned }));
   },
 
@@ -210,6 +218,31 @@ export const sqliteStorage: StorageBackend = {
   async deleteNote(id: string) {
     const d = getDb();
     const result = d.prepare('DELETE FROM notes WHERE id = ?').run(id);
+    return result.changes > 0;
+  },
+
+  async softDeleteNote(id: string) {
+    const d = getDb();
+    const ts = now();
+    const result = d.prepare('UPDATE notes SET deleted_at = ? WHERE id = ? AND deleted_at IS NULL').run(ts, id);
+    return result.changes > 0;
+  },
+
+  async restoreNote(id: string) {
+    const d = getDb();
+    const result = d.prepare('UPDATE notes SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL').run(id);
+    return result.changes > 0;
+  },
+
+  async permanentlyDeleteNote(id: string) {
+    const d = getDb();
+    const result = d.prepare('DELETE FROM notes WHERE id = ? AND deleted_at IS NOT NULL').run(id);
+    return result.changes > 0;
+  },
+
+  async emptyTrash() {
+    const d = getDb();
+    const result = d.prepare('DELETE FROM notes WHERE deleted_at IS NOT NULL').run();
     return result.changes > 0;
   },
 };
