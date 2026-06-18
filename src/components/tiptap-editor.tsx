@@ -37,7 +37,7 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 
 interface TipTapEditorProps {
   content: string;
@@ -165,7 +165,7 @@ const MenuBar = ({ editor, isFullscreen, onFullscreenChange }: { editor: any; is
   };
 
   return (
-    <div className="flex items-center gap-0.5 px-3 py-2 border-b border-border bg-muted/30 flex-wrap">
+    <div className="flex items-center gap-0.5 px-3 py-2 border-b border-border bg-muted/30 flex-wrap shrink-0">
       {/* 基础格式 */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -407,38 +407,6 @@ export function TipTapEditor({ content, onChange, placeholder, isFullscreen: ext
     setInternalFullscreen(v);
     onFullscreenChange?.(v);
   };
-  
-  const [editorHeight, setEditorHeight] = useState(300);
-  const isDraggingRef = useRef(false);
-  const startYRef = useRef(0);
-  const startHeightRef = useRef(0);
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    isDraggingRef.current = true;
-    startYRef.current = e.clientY;
-    startHeightRef.current = editorHeight;
-    document.body.style.cursor = 'se-resize';
-    document.body.style.userSelect = 'none';
-  }, [editorHeight]);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingRef.current) return;
-    const delta = e.clientY - startYRef.current;
-    const newHeight = Math.max(150, startHeightRef.current + delta);
-    setEditorHeight(newHeight);
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    isDraggingRef.current = false;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-  }, []);
-
-  // 添加全局鼠标事件监听
-  if (typeof window !== 'undefined') {
-    window.onmousemove = handleMouseMove;
-    window.onmouseup = handleMouseUp;
-  }
 
   const editor = useEditor({
     extensions: [
@@ -478,7 +446,7 @@ export function TipTapEditor({ content, onChange, placeholder, isFullscreen: ext
     },
     editorProps: {
       attributes: {
-        class: 'focus:outline-none px-4 py-3 text-sm leading-relaxed overflow-auto [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-2 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_li]:pl-2 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_pre]:bg-muted [&_pre]:rounded [&_pre]:p-3 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_code]:text-xs [&_table]:border-collapse [&_table]:w-full [&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:p-2 [&_th]:text-left [&_td]:border [&_td]:border-border [&_td]:p-2 [&_img]:max-w-full [&_img]:h-auto',
+        class: 'focus:outline-none min-h-full px-4 py-3 text-sm leading-relaxed [&_h1]:text-xl [&_h1]:font-bold [&_h1]:mb-3 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:mb-2 [&_p]:mb-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_li]:pl-2 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_pre]:bg-muted [&_pre]:rounded [&_pre]:p-3 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_code]:bg-muted [&_code]:px-1 [&_code]:rounded [&_code]:text-xs [&_table]:border-collapse [&_table]:w-full [&_th]:border [&_th]:border-border [&_th]:bg-muted [&_th]:p-2 [&_th]:text-left [&_td]:border [&_td]:border-border [&_td]:p-2 [&_img]:max-w-full [&_img]:h-auto',
         placeholder: placeholder || '写下你的想法...',
       },
     },
@@ -492,18 +460,8 @@ export function TipTapEditor({ content, onChange, placeholder, isFullscreen: ext
       style={isFullscreen ? { top: 0, left: 0, right: 0, bottom: 0 } : {}}
     >
       <MenuBar editor={editor} isFullscreen={isFullscreen} onFullscreenChange={setFullscreen} />
-      <div className="flex-1 relative" style={isFullscreen ? { height: 'calc(100vh - 45px)' } : { minHeight: `${editorHeight}px` }}>
+      <div className={`flex-1 overflow-y-auto ${isFullscreen ? 'h-[calc(100vh-45px)]' : ''}`}>
         <EditorContent editor={editor} />
-        {!isFullscreen && (
-          <div
-            className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize text-muted-foreground/30 hover:text-muted-foreground/60 p-0.5"
-            onMouseDown={handleMouseDown}
-          >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-              <path d="M14 14H10V10H14V14ZM14 6H10V2H14V6ZM6 14H2V10H6V14ZM6 6H2V2H6V6Z" />
-            </svg>
-          </div>
-        )}
       </div>
     </div>
   );
