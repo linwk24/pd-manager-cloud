@@ -26,6 +26,8 @@ import {
   Square,
   CheckSquare,
   XCircle,
+  LayoutGrid,
+  LayoutList,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -74,6 +76,7 @@ function NotesShell() {
   // Batch selection
   const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
   const [selectMode, setSelectMode] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Trash
   const [showTrash, setShowTrash] = useState(false);
@@ -564,6 +567,22 @@ function NotesShell() {
                 className="pl-8 h-9 text-sm"
               />
             </div>
+            <div className="flex items-center border border-border rounded-md overflow-hidden">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 ${viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-accent'}`}
+                title="网格视图"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-accent'}`}
+                title="列表视图"
+              >
+                <LayoutList size={16} />
+              </button>
+            </div>
           </div>
 
           {/* Note list */}
@@ -603,32 +622,98 @@ function NotesShell() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredNotes.map((note) => (
-                  <div key={note.id} className="relative group">
-                    {/* Selection checkbox */}
-                    {selectMode && (
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {filteredNotes.map((note) => (
+                    <div key={note.id} className="relative group">
+                      {/* Selection checkbox */}
+                      {selectMode && (
+                        <button
+                          onClick={() => toggleSelectNote(note.id)}
+                          className="absolute top-3 left-3 z-10 p-1 bg-background/80 rounded"
+                        >
+                          {selectedNotes.has(note.id) ? (
+                            <CheckSquare size={20} className="text-primary" />
+                          ) : (
+                            <Square size={20} className="text-muted-foreground" />
+                          )}
+                        </button>
+                      )}
+                      <NoteCard
+                        note={note}
+                        onEdit={() => openEdit(note)}
+                        onDelete={() => setConfirmDelete(note)}
+                        onTogglePin={() => togglePin(note)}
+                        selectMode={selectMode}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {filteredNotes.map((note) => (
+                    <div
+                      key={note.id}
+                      className="flex items-center gap-3 p-3 border border-border rounded-md bg-card hover:bg-accent/30 transition-colors group"
+                    >
+                      {selectMode && (
+                        <button
+                          onClick={() => toggleSelectNote(note.id)}
+                          className="shrink-0"
+                        >
+                          {selectedNotes.has(note.id) ? (
+                            <CheckSquare size={20} className="text-primary" />
+                          ) : (
+                            <Square size={20} className="text-muted-foreground" />
+                          )}
+                        </button>
+                      )}
                       <button
-                        onClick={() => toggleSelectNote(note.id)}
-                        className="absolute top-3 left-3 z-10 p-1 bg-background/80 rounded"
+                        onClick={() => openEdit(note)}
+                        className="flex-1 min-w-0 text-left"
                       >
-                        {selectedNotes.has(note.id) ? (
-                          <CheckSquare size={20} className="text-primary" />
-                        ) : (
-                          <Square size={20} className="text-muted-foreground" />
-                        )}
+                        <div className="flex items-center gap-2">
+                          <span className={`font-serif-display text-sm truncate ${note.pinned ? 'font-semibold' : ''}`}>
+                            {note.title || <span className="text-muted-foreground/50 italic">无标题</span>}
+                          </span>
+                          {note.pinned ? <Pin size={12} className="shrink-0 text-amber-500" /> : null}
+                        </div>
+                        <p className="text-xs text-muted-foreground/60 mt-0.5 truncate">
+                          {note.content.replace(/<[^>]*>/g, '').slice(0, 80) || '无内容'}
+                        </p>
                       </button>
-                    )}
-                    <NoteCard
-                      note={note}
-                      onEdit={() => openEdit(note)}
-                      onDelete={() => setConfirmDelete(note)}
-                      onTogglePin={() => togglePin(note)}
-                      selectMode={selectMode}
-                    />
-                  </div>
-                ))}
-              </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {note.category && (
+                          <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-border rounded px-1.5 py-0.5">
+                            {note.category}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground/60 whitespace-nowrap">
+                          {new Date(note.updated_at).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => togglePin(note)}
+                          className="p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title={note.pinned ? '取消置顶' : '置顶'}
+                        >
+                          {note.pinned ? (
+                            <Pin size={14} className="text-amber-500" />
+                          ) : (
+                            <PinOff size={14} className="text-muted-foreground" />
+                          )}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDelete(note)}
+                          className="p-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                          title="删除"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <Pagination
                 total={totalNotes}
