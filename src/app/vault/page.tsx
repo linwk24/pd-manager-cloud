@@ -617,16 +617,24 @@ function CategoryButton({
       <div className="flex items-center gap-1">
         <span className="text-[10px] text-muted-foreground font-mono-pretty">{count}</span>
         {showDelete && onDelete && (
-          <button
+          <div
+            role="button"
+            tabIndex={0}
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
             }}
-            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-destructive/20 rounded transition-all"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.stopPropagation();
+                onDelete();
+              }
+            }}
+            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-destructive/20 rounded transition-all cursor-pointer"
             title="删除分类"
           >
             <Trash2 size={12} className="text-destructive" />
-          </button>
+          </div>
         )}
       </div>
     </button>
