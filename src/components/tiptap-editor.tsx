@@ -171,13 +171,13 @@ function ColorPicker({ editor }: { editor: any }) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShowPicker(false)} />
           <div className="absolute top-full left-0 mt-1 p-2 bg-background border border-border rounded-lg shadow-lg z-50">
-            <div className="grid grid-cols-8 gap-1">
+            <div className="grid grid-cols-8 gap-1 w-[184px]">
               {COLOR_PRESETS.flat().map((color, i) => (
                 <button
                   key={i}
                   type="button"
                   onClick={() => setColor(color)}
-                  className="w-5 h-5 rounded border border-border hover:ring-2 hover:ring-primary transition-all"
+                  className="w-[20px] h-[20px] rounded border border-border hover:ring-2 hover:ring-primary transition-all"
                   style={{ backgroundColor: color }}
                   title={color}
                 />
