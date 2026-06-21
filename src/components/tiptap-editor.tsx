@@ -127,6 +127,78 @@ const FONT_SIZES = [
   { value: '36px', label: '36' },
 ];
 
+// 预设颜色网格 (5行8列)
+const COLOR_PRESETS = [
+  ['#000000', '#FFFFFF', '#EEECE1', '#9E9E9E', '#4A4A4A', '#C23531', '#D83A3A', '#E74C3C'],
+  ['#FF6600', '#FFA500', '#FFC107', '#FFEB3B', '#CDDC39', '#8BC34A', '#4CAF50', '#009688'],
+  ['#00BCD4', '#03A9F4', '#2196F3', '#3F51B5', '#673AB7', '#9C27B0', '#E91E63', '#F44336'],
+  ['#FCE4EC', '#F8BBD0', '#F48FB1', '#F06292', '#EC407A', '#E91E63', '#D81B60', '#C2185B'],
+  ['#FFECB3', '#FFE082', '#FFD54F', '#FFCA28', '#FFC107', '#FFB300', '#FFA000', '#FF8F00'],
+];
+
+function ColorPicker({ editor }: { editor: any }) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  const getCurrentColor = () => {
+    return editor.getAttributes('textStyle').color || '#000000';
+  };
+
+  const setColor = (color: string) => {
+    editor.chain().focus().setColor(color).run();
+    setShowPicker(false);
+  };
+
+  const clearColor = () => {
+    editor.chain().focus().unsetColor().run();
+    setShowPicker(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        title="字体颜色"
+        onClick={() => setShowPicker(!showPicker)}
+        className="flex items-center gap-1 px-1.5 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50"
+      >
+        <span className="font-bold">A</span>
+        <span
+          className="w-4 h-4 rounded border border-border"
+          style={{ backgroundColor: getCurrentColor() }}
+        />
+      </button>
+      {showPicker && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setShowPicker(false)} />
+          <div className="absolute top-full left-0 mt-1 p-2 bg-background border border-border rounded-lg shadow-lg z-50">
+            <div className="grid grid-cols-8 gap-1">
+              {COLOR_PRESETS.flat().map((color, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setColor(color)}
+                  className="w-5 h-5 rounded border border-border hover:ring-2 hover:ring-primary transition-all"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={clearColor}
+                className="flex-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded"
+              >
+                清除颜色
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 const MenuBar = ({ editor, isFullscreen, onFullscreenChange }: { editor: any; isFullscreen?: boolean; onFullscreenChange?: (v: boolean) => void }) => {
   const [linkUrl, setLinkUrl] = useState('');
   const [showLinkInput, setShowLinkInput] = useState(false);
@@ -234,6 +306,9 @@ const MenuBar = ({ editor, isFullscreen, onFullscreenChange }: { editor: any; is
         options={FONT_SIZES}
         title="字号"
       />
+
+      {/* 字体颜色 */}
+      <ColorPicker editor={editor} />
 
       <div className="w-px h-5 bg-border mx-1" />
 
