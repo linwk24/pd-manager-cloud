@@ -117,8 +117,9 @@ export const supabaseStorage: StorageBackend = {
     return (data ?? []).map(toNote);
   },
 
-  async listDeletedNotes() {
-    const client = getClient();
+  async listDeletedNotes(params?: { q?: string }) {
+    const token = params?.q;
+    const client = getClient(token);
     const { data, error } = await client.from('notes').select('*').not('deleted_at', 'is', null).order('deleted_at', { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []).map(toNote);
@@ -168,8 +169,9 @@ export const supabaseStorage: StorageBackend = {
     return !error;
   },
 
-  async emptyTrash() {
-    const client = getClient();
+  async emptyTrash(params?) {
+    const token = params?.q;
+    const client = getClient(token);
     const { error } = await client.from('notes').delete().not('deleted_at', 'is', null);
     return !error;
   },

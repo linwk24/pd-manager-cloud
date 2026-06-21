@@ -5,10 +5,10 @@ import { getAuthedStorage } from '@/lib/auth-helper';
 export async function GET(req: NextRequest) {
   const result = await getAuthedStorage(req);
   if ('error' in result) return result.error;
-  const { storage } = result;
+  const { storage, token } = result;
 
   try {
-    const notes = await storage.listDeletedNotes();
+    const notes = await storage.listDeletedNotes({ q: token });
     return NextResponse.json({ notes });
   } catch (err: any) {
     return NextResponse.json({ error: `获取回收站失败: ${err.message}` }, { status: 500 });
@@ -19,10 +19,10 @@ export async function GET(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const result = await getAuthedStorage(req);
   if ('error' in result) return result.error;
-  const { storage } = result;
+  const { storage, token } = result;
 
   try {
-    await storage.emptyTrash();
+    await storage.emptyTrash({ q: token });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: `清空回收站失败: ${err.message}` }, { status: 500 });

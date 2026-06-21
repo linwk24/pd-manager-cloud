@@ -174,9 +174,10 @@ export const sqliteStorage: StorageBackend = {
     return rows.map(r => ({ ...r, pinned: !!r.pinned }));
   },
 
-  async listDeletedNotes() {
+  async listDeletedNotes(params?) {
     const d = getDb();
-    const rows = d.prepare('SELECT * FROM notes WHERE user_id = ? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC').all('current') as any[];
+    const userId = params?.q;
+    const rows = d.prepare('SELECT * FROM notes WHERE user_id = ? AND deleted_at IS NOT NULL ORDER BY deleted_at DESC').all(userId) as any[];
     return rows.map(r => ({ ...r, pinned: !!r.pinned }));
   },
 
@@ -240,9 +241,10 @@ export const sqliteStorage: StorageBackend = {
     return result.changes > 0;
   },
 
-  async emptyTrash() {
+  async emptyTrash(params?) {
     const d = getDb();
-    const result = d.prepare('DELETE FROM notes WHERE deleted_at IS NOT NULL').run();
+    const userId = params?.q;
+    const result = d.prepare('DELETE FROM notes WHERE user_id = ? AND deleted_at IS NOT NULL').run(userId);
     return result.changes > 0;
   },
 };

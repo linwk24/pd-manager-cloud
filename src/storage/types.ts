@@ -53,6 +53,6 @@ export interface StorageBackend {
   softDeleteNote(id: string): Promise<boolean>;
   restoreNote(id: string): Promise<boolean>;
   permanentlyDeleteNote(id: string): Promise<boolean>;
-  listDeletedNotes(): Promise<NoteData[]>;
-  emptyTrash(): Promise<boolean>;
+  listDeletedNotes(params?: { q?: string }): Promise<NoteData[]>;
+  emptyTrash(params?: { q?: string }): Promise<boolean>;
 }
