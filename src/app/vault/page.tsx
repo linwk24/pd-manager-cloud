@@ -265,6 +265,21 @@ function VaultShell() {
     setShowNewCategory(false);
   }
 
+  function deleteCustomCategory(name: string) {
+    if (!customCategories.includes(name)) return;
+    const next = customCategories.filter(c => c !== name);
+    setCustomCategories(next);
+    localStorage.setItem(CATEGORY_KEY, JSON.stringify(next));
+    if (activeCategory === name) {
+      setActiveCategory('全部');
+    }
+    toast.success(`分类「${name}」已删除`);
+  }
+
+  function isDefaultCategory(name: string) {
+    return DEFAULT_CATEGORIES.includes(name);
+  }
+
   async function handleExport(format: 'json' | 'csv') {
     setExportMenuOpen(false);
     try {
@@ -433,6 +448,8 @@ function VaultShell() {
                 count={categoryCounts.get(c) ?? 0}
                 active={activeCategory === c}
                 onClick={() => setActiveCategory(c)}
+                onDelete={() => deleteCustomCategory(c)}
+                showDelete={!isDefaultCategory(c)}
               />
             ))}
             {showNewCategory ? (
@@ -574,16 +591,20 @@ function CategoryButton({
   count,
   active,
   onClick,
+  onDelete,
+  showDelete,
 }: {
   label: string;
   count: number;
   active: boolean;
   onClick: () => void;
+  onDelete?: () => void;
+  showDelete?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-all border ${
+      className={`flex items-center justify-between px-3 py-2 rounded-md text-sm transition-all border group ${
         active
           ? 'bg-accent/60 border-border text-foreground'
           : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-accent/30'
@@ -593,7 +614,21 @@ function CategoryButton({
         <Folder size={12} />
         {label}
       </span>
-      <span className="text-[10px] text-muted-foreground font-mono-pretty">{count}</span>
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] text-muted-foreground font-mono-pretty">{count}</span>
+        {showDelete && onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-destructive/20 rounded transition-all"
+            title="删除分类"
+          >
+            <Trash2 size={12} className="text-destructive" />
+          </button>
+        )}
+      </div>
     </button>
   );
 }
