@@ -17,7 +17,7 @@ export interface NoteData {
   title: string;
   content: string;
   category: string | null;
-  pinned: boolean;
+  pinned: number;
   deleted_at?: string | null;
   created_at: string;
   updated_at: string;

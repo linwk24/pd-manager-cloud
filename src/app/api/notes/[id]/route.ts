@@ -34,7 +34,7 @@ export async function PUT(
   if (typeof body.title === 'string') update.title = body.title.trim();
   if (typeof body.content === 'string') update.content = body.content;
   if (typeof body.category === 'string') update.category = body.category.trim() || '默认';
-  if (typeof body.pinned === 'boolean') update.pinned = body.pinned;
+  if (typeof body.pinned === 'boolean') update.pinned = body.pinned ? 1 : 0;
 
   const note = await storage.updateNote(id, update);
   if (!note) return NextResponse.json({ error: '笔记不存在或无权限' }, { status: 404 });

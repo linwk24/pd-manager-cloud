@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
       title,
       content,
       category: typeof body.category === 'string' && body.category.trim() ? body.category.trim() : '默认',
-      pinned: body.pinned === true,
+      pinned: body.pinned === true ? 1 : 0,
     });
     return NextResponse.json({ note });
   } catch (err: any) {

@@ -2,11 +2,21 @@ import { getSupabaseClient } from './database/supabase-client';
 import { StorageBackend, VaultEntryData, NoteData, UserData } from './types';
 
 function toVaultEntry(row: any): VaultEntryData {
-  return row as VaultEntryData;
+  return { 
+    ...row,
+    username: row.username || null,
+    url: row.url || null,
+    notes: row.notes || null,
+    category: row.category || null
+  };
 }
 
 function toNote(row: any): NoteData {
-  return { ...row, pinned: !!row.pinned };
+  return { 
+    ...row, 
+    pinned: row.pinned ? 1 : 0,
+    category: row.category || null
+  };
 }
 
 function getClient(token?: string) {
