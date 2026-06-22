@@ -95,9 +95,13 @@ export const supabaseStorage: StorageBackend = {
 
   async createEntry(data) {
     const client = getClient();
-    const { data: entry, error } = await client.from('vault_entries').insert(data).select().maybeSingle();
+    // upsert: 如果存在则更新，不存在则插入
+    const { data: entry, error } = await client.from('vault_entries').upsert(data, { 
+      onConflict: 'id',
+      ignoreDuplicates: false 
+    }).select().maybeSingle();
     if (error) throw new Error(error.message);
-    return toVaultEntry(entry);
+    return entry ? toVaultEntry(entry) : null;
   },
 
   async updateEntry(id, data) {
@@ -143,9 +147,13 @@ export const supabaseStorage: StorageBackend = {
 
   async createNote(data) {
     const client = getClient();
-    const { data: note, error } = await client.from('notes').insert(data).select().maybeSingle();
+    // upsert: 如果存在则更新，不存在则插入
+    const { data: note, error } = await client.from('notes').upsert(data, { 
+      onConflict: 'id',
+      ignoreDuplicates: false 
+    }).select().maybeSingle();
     if (error) throw new Error(error.message);
-    return toNote(note);
+    return note ? toNote(note) : null;
   },
 
   async updateNote(id, data) {

@@ -40,14 +40,14 @@ export interface StorageBackend {
   // 密码条目
   listEntries(params?: { q?: string; category?: string }): Promise<VaultEntryData[]>;
   getEntry(id: string): Promise<VaultEntryData | null>;
-  createEntry(data: Omit<VaultEntryData, 'id' | 'created_at' | 'updated_at'> & { user_id: string }): Promise<VaultEntryData>;
+  createEntry(data: Omit<VaultEntryData, 'id' | 'created_at' | 'updated_at'> & { user_id: string }): Promise<VaultEntryData | null>;
   updateEntry(id: string, data: Partial<Omit<VaultEntryData, 'id' | 'created_at' | 'updated_at'>>): Promise<VaultEntryData | null>;
   deleteEntry(id: string): Promise<boolean>;
 
   // 笔记
   listNotes(params?: { q?: string; category?: string }): Promise<NoteData[]>;
   getNote(id: string): Promise<NoteData | null>;
-  createNote(data: Omit<NoteData, 'id' | 'created_at' | 'updated_at'> & { user_id: string }): Promise<NoteData>;
+  createNote(data: Omit<NoteData, 'id' | 'created_at' | 'updated_at'> & { user_id: string }): Promise<NoteData | null>;
   updateNote(id: string, data: Partial<Omit<NoteData, 'id' | 'created_at' | 'updated_at'>>): Promise<NoteData | null>;
   deleteNote(id: string): Promise<boolean>;
   softDeleteNote(id: string): Promise<boolean>;
