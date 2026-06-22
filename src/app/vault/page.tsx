@@ -239,6 +239,11 @@ function VaultShell() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-session': token },
       });
+      if (!res.ok) {
+        const text = await res.text();
+        toast.error(text || '同步请求失败');
+        return;
+      }
       const data = await res.json();
       if (data.needCloudRegister) {
         toast.error('请先切换到云端模式注册账号，再回来同步');
