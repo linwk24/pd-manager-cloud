@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
         title,
         content,
         category: typeof note.category === 'string' && note.category.trim() ? note.category.trim() : '默认',
-        pinned: note.pinned === true,
+        pinned: note.pinned ? 1 : 0,
       });
       results.imported_notes++;
     } catch (err) {
