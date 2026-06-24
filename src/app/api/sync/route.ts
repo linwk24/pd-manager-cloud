@@ -24,13 +24,15 @@ export async function POST(req: NextRequest) {
     // 获取云端存储
     const cloudStorage = supabaseStorage;
 
-    // 获取云端用户
-    const cloudUser = await cloudStorage.getUser(token);
-    if (!cloudUser) {
-      return NextResponse.json({
-        needCloudRegister: true,
-        error: '该邮箱尚未在云端注册，请先切换到云端模式注册后再同步',
-      }, { status: 400 });
+    // 获取云端用户（优先使用 token 验证的用户）
+    let cloudUserId = user.id; // 默认使用本地用户 ID
+    try {
+      const cloudUser = await cloudStorage.getUser(token);
+      if (cloudUser) {
+        cloudUserId = cloudUser.id; // 使用云端用户 ID
+      }
+    } catch {
+      // 用户不存在，使用本地用户 ID（数据将以本地用户 ID 存储到云端）
     }
 
     let syncedEntries = 0;
@@ -41,7 +43,7 @@ export async function POST(req: NextRequest) {
       try {
         const cloudEntry = {
           id: entry.id,
-          user_id: cloudUser.id,
+          user_id: cloudUserId,
           title: entry.title,
           username: entry.username,
           password: entry.password,
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
         const pinned = note.pinned === 1 ? 1 : 0;
         const cloudNote = {
           id: note.id,
-          user_id: cloudUser.id,
+          user_id: cloudUserId,
           title: note.title,
           content: note.content,
           category: note.category || '默认',

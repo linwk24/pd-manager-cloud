@@ -17,7 +17,9 @@ function loadMode(): StorageMode {
   try {
     const raw = fs.readFileSync(getSettingsPath(), 'utf-8');
     const { mode } = JSON.parse(raw);
-    if (mode === 'sqlite' || mode === 'supabase') return mode;
+    // 支持 'local'/'sqlite' 和 'supabase'
+    if (mode === 'local' || mode === 'sqlite') return 'sqlite';
+    if (mode === 'supabase') return mode;
   } catch { /* 默认 supabase */ }
   return 'supabase';
 }
