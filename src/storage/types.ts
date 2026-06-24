@@ -55,8 +55,4 @@ export interface StorageBackend {
   permanentlyDeleteNote(id: string): Promise<boolean>;
   listDeletedNotes(params?: { q?: string }): Promise<NoteData[]>;
   emptyTrash(params?: { q?: string }): Promise<boolean>;
-  // 分享功能
-  createNoteShare(params: { noteId: string; expiresAt?: string }): Promise<{ shareToken: string }>;
-  getSharedNote(params: { shareToken: string }): Promise<NoteData | null>;
-  deleteNoteShare(params: { noteId: string }): Promise<boolean>;
 }

@@ -148,32 +148,6 @@
 **前端组件:**
 - `Pagination` - 通用分页组件，支持首页/上一页/下一页/末页导航
 
-### 笔记分享功能
-支持通过链接分享笔记给其他人查看，无需登录即可访问。
-
-**API 接口:**
-- `POST /api/notes/share` - 创建分享链接（需要登录）
-  - Body: `{ "noteId": "xxx", "expiresAt": "2024-12-31T23:59:59Z" }`（可选）
-  - 返回: `{ "share_token": "xxx", "share_url": "http://..." }`
-- `GET /api/share/[token]` - 获取分享的笔记内容（无需登录）
-  - 返回: 笔记数据或 404
-
-**分享页面:**
-- `GET /share/[token]` - 公开分享页面 UI
-
-**数据库表:**
-- `note_shares` 表（SQLite 和 Supabase）
-  - id: 分享记录 ID
-  - note_id: 关联的笔记 ID
-  - share_token: 唯一分享令牌
-  - created_at: 创建时间
-  - expires_at: 过期时间（可选）
-
-**前端使用:**
-- 笔记卡片工具栏有分享按钮
-- 点击后生成分享链接并复制到剪贴板
-- 分享页面支持富文本内容展示
-
 ## 飞牛 NAS FPK 打包
 
 项目支持使用官方 `fnpack` 工具打包为飞牛 NAS 的 fpk 格式进行安装。

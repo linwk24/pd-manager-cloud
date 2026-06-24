@@ -28,8 +28,6 @@ import {
   XCircle,
   LayoutGrid,
   LayoutList,
-  Share2,
-  Link,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,7 +36,7 @@ import { AuthGuard } from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TipTapEditor } from '@/components/tiptap-editor';
-import { Note, listNotes, createNote, updateNote, deleteNote, softDeleteNote, restoreNote, permanentlyDeleteNote, listDeletedNotes, emptyTrash, exportData, exportNote, importData, createNoteShare } from '@/lib/api';
+import { Note, listNotes, createNote, updateNote, deleteNote, softDeleteNote, restoreNote, permanentlyDeleteNote, listDeletedNotes, emptyTrash, exportData, exportNote, importData } from '@/lib/api';
 import { Pagination } from '@/components/pagination';
 
 const CATEGORY_KEY = 'notes.customCategories.v1';
@@ -84,30 +82,6 @@ function NotesShell() {
   const [showTrash, setShowTrash] = useState(false);
   const [trashNotes, setTrashNotes] = useState<Note[]>([]);
   const [confirmEmptyTrash, setConfirmEmptyTrash] = useState(false);
-
-  // Share
-  const [shareNote, setShareNote] = useState<Note | null>(null);
-  const [shareLink, setShareLink] = useState('');
-  const [isSharing, setIsSharing] = useState(false);
-
-  const handleShare = async (note: Note) => {
-    setIsSharing(true);
-    try {
-      const result = await createNoteShare(note.id);
-      setShareNote(note);
-      setShareLink(result.share_url);
-    } catch (err) {
-      console.error('Share failed:', err);
-      toast.error('分享失败');
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
-  const copyShareLink = () => {
-    navigator.clipboard.writeText(shareLink);
-    toast.success('链接已复制到剪贴板');
-  };
 
   useEffect(() => {
     let mounted = true;
@@ -670,7 +644,6 @@ function NotesShell() {
                         onEdit={() => openEdit(note)}
                         onDelete={() => setConfirmDelete(note)}
                         onTogglePin={() => togglePin(note)}
-                        onShare={() => handleShare(note)}
                         selectMode={selectMode}
                       />
                     </div>
@@ -728,13 +701,6 @@ function NotesShell() {
                           ) : (
                             <PinOff size={14} className="text-muted-foreground" />
                           )}
-                        </button>
-                        <button
-                          onClick={() => handleShare(note)}
-                          className="p-1 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary"
-                          title="分享"
-                        >
-                          <Share2 size={14} />
                         </button>
                         <button
                           onClick={() => setConfirmDelete(note)}
@@ -969,7 +935,6 @@ function NotesShell() {
             </div>
           </div>
         </div>
-
       )}
     </div>
   );
@@ -981,15 +946,12 @@ function NoteCard({
   onDelete,
   onTogglePin,
   selectMode = false,
-  onShare,
-
 }: {
   note: Note;
   onEdit: () => void;
   onDelete: () => void;
   onTogglePin: () => void;
   selectMode?: boolean;
-  onShare?: () => void;
 }) {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
 
@@ -1056,7 +1018,6 @@ function NoteCard({
             )}
           </div>
           <IconButton title={note.pinned ? '取消置顶' : '置顶'} onClick={onTogglePin} icon={note.pinned ? <PinOff size={14} /> : <Pin size={14} />} />
-          <IconButton title="分享" onClick={onShare ?? (() => {})} icon={<Share2 size={14} />} />
           <IconButton title="编辑" onClick={onEdit} icon={<Pencil size={14} />} />
           <IconButton title="删除" onClick={onDelete} icon={<Trash2 size={14} />} danger />
         </div>

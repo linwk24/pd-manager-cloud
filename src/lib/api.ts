@@ -227,50 +227,6 @@ export async function emptyTrash(): Promise<void> {
   }
 }
 
-// ===== Share =====
-
-export interface ShareResult {
-  success: boolean;
-  share_token: string;
-  share_url: string;
-}
-
-export async function createNoteShare(noteId: string): Promise<ShareResult> {
-  const res = await authedFetch('/api/notes/share', {
-    method: 'POST',
-    body: JSON.stringify({ noteId }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || '分享失败');
-  }
-  return {
-    success: true,
-    share_token: data.share_token,
-    share_url: data.share_url,
-  };
-}
-
-export async function deleteShare(noteId: string): Promise<void> {
-  const res = await authedFetch('/api/notes/share', {
-    method: 'DELETE',
-    body: JSON.stringify({ noteId }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: '取消分享失败' }));
-    throw new Error(err.error ?? '取消分享失败');
-  }
-}
-
-export async function getShareStatus(noteId: string): Promise<{ isShared: boolean; shareUrl?: string }> {
-  const res = await authedFetch(`/api/notes/share?noteId=${noteId}`);
-  const data = await res.json();
-  if (!res.ok) {
-    return { isShared: false };
-  }
-  return { isShared: data.isShared, shareUrl: data.shareUrl };
-}
-
 // ===== Export/Import =====
 
 export type ExportFormat = 'json' | 'csv' | 'markdown' | 'pdf';
