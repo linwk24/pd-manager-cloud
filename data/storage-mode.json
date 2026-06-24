@@ -1,1 +1,3 @@
-{"mode":"local"}
+{
+  "mode": "supabase"
+}
