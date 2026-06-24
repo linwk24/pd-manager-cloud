@@ -6,29 +6,42 @@ async function ensureTables() {
   const client = getClient();
   
   // 创建 notes 表
-  const { error: notesError } = await client.rpc('exec', {
-    query: `
-      CREATE TABLE IF NOT EXISTS notes (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-        user_id TEXT NOT NULL,
-        title TEXT NOT NULL DEFAULT '',
-        content TEXT NOT NULL DEFAULT '',
-        category TEXT NOT NULL DEFAULT '默认',
-        pinned INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-        deleted_at TEXT
-      );
-    `
-  }).catch(() => {
-    // 如果 rpc 不可用，尝试直接创建
-    return client.from('notes').select('id').limit(1);
-  });
+  try {
+    await client.rpc('exec', {
+      query: `
+        CREATE TABLE IF NOT EXISTS notes (
+          id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          user_id TEXT NOT NULL,
+          title TEXT NOT NULL DEFAULT '',
+          content TEXT NOT NULL DEFAULT '',
+          category TEXT NOT NULL DEFAULT '默认',
+          pinned INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+          deleted_at TEXT
+        );
+      `
+    });
+  } catch {
+    // 如果 rpc 不可用，忽略
+  }
   
-  // 创建 vault_entries 表
-  await client.from('vault_entries').select('id').limit(1).catch(() => {
-    // 如果表不存在，后续操作会失败，需要用户手动创建
-  });
+  // 创建 note_shares 表
+  try {
+    await client.rpc('exec', {
+      query: `
+        CREATE TABLE IF NOT EXISTS note_shares (
+          id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+          note_id TEXT NOT NULL,
+          share_token TEXT UNIQUE NOT NULL,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          expires_at TEXT
+        );
+      `
+    });
+  } catch {
+    // 如果 rpc 不可用，忽略
+  }
 }
 
 // 在模块加载时尝试初始化
@@ -227,6 +240,55 @@ export const supabaseStorage: StorageBackend = {
     const token = params?.q;
     const client = getClient(token);
     const { error } = await client.from('notes').delete().not('deleted_at', 'is', null);
+    return !error;
+  },
+
+  // ---- Note Sharing ----
+
+  async createNoteShare(params: { noteId: string; expiresAt?: string }): Promise<{ shareToken: string; shareUrl: string }> {
+    const { noteId, expiresAt } = params;
+    const shareToken = crypto.randomUUID();
+    const { error } = await getSupabaseClient()
+      .from('note_shares')
+      .insert({ note_id: noteId, share_token: shareToken, expires_at: expiresAt });
+    if (error) throw new Error(error.message);
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:5000';
+    return { shareToken, shareUrl: `${baseUrl}/share/${shareToken}` };
+  },
+
+  async getSharedNote(params: { shareToken: string }): Promise<NoteData | null> {
+    const { data, error } = await getSupabaseClient()
+      .from('note_shares')
+      .select(`
+        note_id,
+        notes:note_id (id, title, content, category, created_at, updated_at)
+      `)
+      .eq('share_token', params.shareToken)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (error || !data) return null;
+
+    const noteData = (data as any).notes;
+    if (!noteData) return null;
+
+    return {
+      id: noteData.id,
+      title: noteData.title,
+      content: noteData.content,
+      category: noteData.category,
+      pinned: 0,
+      created_at: noteData.created_at,
+      updated_at: noteData.updated_at,
+      deleted_at: null,
+    };
+  },
+
+  async deleteNoteShare(params: { noteId: string }): Promise<boolean> {
+    const { error } = await getSupabaseClient()
+      .from('note_shares')
+      .delete()
+      .eq('note_id', params.noteId);
     return !error;
   },
 };
