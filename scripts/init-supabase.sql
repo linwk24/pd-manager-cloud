@@ -1,5 +1,5 @@
 -- ============================================
--- Secure Vault 云端数据库初始化脚本
+-- Secure Vault 云端数据库初始化脚本 (PostgreSQL)
 -- ============================================
 -- 使用方法：
 -- 1. 登录 Supabase Dashboard
@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS notes (
   content TEXT NOT NULL DEFAULT '',
   category TEXT NOT NULL DEFAULT '默认',
   pinned INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  deleted_at TEXT
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
 -- 启用行级安全
@@ -34,9 +34,9 @@ CREATE TABLE IF NOT EXISTS vault_entries (
   notes TEXT NOT NULL DEFAULT '',
   category TEXT NOT NULL DEFAULT '默认',
   favorite INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  deleted_at TEXT
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  deleted_at TIMESTAMPTZ
 );
 
 -- 启用行级安全
