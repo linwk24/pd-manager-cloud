@@ -12,11 +12,9 @@ echo "Building the Next.js project..."
 pnpm next build
 
 echo "Building OpenNext for Cloudflare..."
-# 使用 npx 来执行（会自动查找本地安装的包）
-npx @opennextjs/cloudflare build
-
-# 或者使用 pnpm exec
-# pnpm exec opennextjs-cloudflare build
+# 使用本地安装的 CLI（package.json devDependencies 已固定版本）
+# --skipNextBuild: 上面已经跑过 next build，避免重复构建（否则会再次触发 build 脚本造成递归）
+pnpm exec opennextjs-cloudflare build --skipNextBuild
 
 echo "Bundling server with tsup..."
 pnpm tsup src/server.ts --format cjs --platform node --target node20 --outDir dist --no-splitting --no-minify

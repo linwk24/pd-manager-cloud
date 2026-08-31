@@ -99,6 +99,7 @@ build/
 out/
 .next/
 .rsbuild/
+.open-next/
 # Testing
 coverage/
 *.lcov
