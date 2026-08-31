@@ -1,14 +1,20 @@
-name = "secure-vault"
-compatibility_date = "2024-12-30"
+name = "pd-manager-cloud"
+compatibility_date = "2026-08-31"
 compatibility_flags = ["nodejs_compat"]
 
 # ⚠️ 重要：指定 Worker 入口文件（OpenNext 构建后生成）
 main = ".open-next/worker.js"
 
+# 显式声明 workers.dev / preview_urls，消除 wrangler 警告
+workers_dev = true
+preview_urls = false
+
 [vars]
 COZE_SUPABASE_URL = "https://ndtfyfbvudzqexojweqw.supabase.co"
 COZE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kdGZ5ZmJ2dWR6cWV4b2p3ZXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDU2MjAsImV4cCI6MjA5Mjg4MTYyMH0.9qQE0HV-LOvPk9VrflD9Cum4BKDSUXQPKcRn3mBc_j4"
-COZE_SUPABASE_SERVICE_ROLE_KEY = "your-service-role-key"
+# ⚠️ 安全：COZE_SUPABASE_SERVICE_ROLE_KEY（Supabase service_role，最高权限）不提交到公开仓库。
+# 请在 Cloudflare Dashboard → Workers & Pages → pd-manager-cloud → Settings →
+# Variables and Secrets → Add secret 中配置，部署后会自动注入到 worker 环境。
 COZE_PROJECT_ENV = "PROD"
 
 [[rules]]
