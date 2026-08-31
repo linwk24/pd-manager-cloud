@@ -36,13 +36,13 @@ export async function PUT(
     if (!t) return NextResponse.json({ error: '标题不能为空' }, { status: 400 });
     update.title = t;
   }
-  if (typeof body.username === 'string') update.username = body.username.trim() || null;
+  if (typeof body.username === 'string') update.username = body.username.trim();
   if (typeof body.password === 'string') {
     if (!body.password) return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
     update.password = body.password;
   }
-  if (typeof body.url === 'string') update.url = body.url.trim() || null;
-  if (typeof body.notes === 'string') update.notes = body.notes.trim() || null;
+  if (typeof body.url === 'string') update.url = body.url.trim();
+  if (typeof body.notes === 'string') update.notes = body.notes.trim();
   if (typeof body.category === 'string' && body.category.trim()) update.category = body.category.trim();
 
   const entry = await storage.updateEntry(id, update);

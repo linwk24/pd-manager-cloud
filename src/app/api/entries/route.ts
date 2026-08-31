@@ -52,10 +52,11 @@ export async function POST(req: NextRequest) {
     const entry = await storage.createEntry({
       user_id: user.id,
       title,
-      username: typeof body.username === 'string' ? body.username.trim() || null : null,
+      // 数据库列是 NOT NULL DEFAULT ''，空值传 ''（不能传 null，否则违反约束）
+      username: typeof body.username === 'string' ? body.username.trim() : '',
       password,
-      url: typeof body.url === 'string' ? body.url.trim() || null : null,
-      notes: typeof body.notes === 'string' ? body.notes.trim() || null : null,
+      url: typeof body.url === 'string' ? body.url.trim() : '',
+      notes: typeof body.notes === 'string' ? body.notes.trim() : '',
       category: typeof body.category === 'string' && body.category.trim() ? body.category.trim() : '默认',
     });
     return NextResponse.json({ entry });
