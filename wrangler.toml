@@ -1,0 +1,16 @@
+name = "secure-vault"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+COZE_SUPABASE_URL = "https://your-project.supabase.co"
+COZE_SUPABASE_ANON_KEY = "your-anon-key"
+COZE_SUPABASE_SERVICE_ROLE_KEY = "your-service-role-key"
+COZE_PROJECT_ENV = "PROD"
+
+[[rules]]
+type = "ESModule"
+globs = ["**/*.js"]
+
+[site]
+bucket = ".open-next/assets"
