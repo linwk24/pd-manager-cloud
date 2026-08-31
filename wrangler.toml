@@ -2,15 +2,15 @@ name = "secure-vault"
 compatibility_date = "2024-01-01"
 compatibility_flags = ["nodejs_compat"]
 
+# ⚠️ 重要：指定 Worker 入口文件（OpenNext 构建后生成）
+main = ".open-next/worker.js"
+
 [vars]
-COZE_SUPABASE_URL = "https://your-project.supabase.co"
-COZE_SUPABASE_ANON_KEY = "your-anon-key"
+COZE_SUPABASE_URL = "https://ndtfyfbvudzqexojweqw.supabase.co"
+COZE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kdGZ5ZmJ2dWR6cWV4b2p3ZXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDU2MjAsImV4cCI6MjA5Mjg4MTYyMH0.9qQE0HV-LOvPk9VrflD9Cum4BKDSUXQPKcRn3mBc_j4"
 COZE_SUPABASE_SERVICE_ROLE_KEY = "your-service-role-key"
 COZE_PROJECT_ENV = "PROD"
 
 [[rules]]
 type = "ESModule"
 globs = ["**/*.js"]
-
-[site]
-bucket = ".open-next/assets"
