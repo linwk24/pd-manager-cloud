@@ -9,6 +9,11 @@ main = ".open-next/worker.js"
 workers_dev = true
 preview_urls = false
 
+# OpenNext 静态资源（_next/static 等）由 ASSETS 绑定托管
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
 [vars]
 COZE_SUPABASE_URL = "https://ndtfyfbvudzqexojweqw.supabase.co"
 COZE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5kdGZ5ZmJ2dWR6cWV4b2p3ZXF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczMDU2MjAsImV4cCI6MjA5Mjg4MTYyMH0.9qQE0HV-LOvPk9VrflD9Cum4BKDSUXQPKcRn3mBc_j4"
