@@ -1,42 +1,6 @@
 import { getSupabaseClient } from './database/supabase-client';
 import { StorageBackend, VaultEntryData, NoteData, UserData } from './types';
 
-// 自动初始化云端数据库表
-async function ensureTables() {
-  const client = getClient();
-  
-  // 创建 notes 表
-  const { error: notesError } = await client.rpc('exec', {
-    query: `
-      CREATE TABLE IF NOT EXISTS notes (
-        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-        user_id TEXT NOT NULL,
-        title TEXT NOT NULL DEFAULT '',
-        content TEXT NOT NULL DEFAULT '',
-        category TEXT NOT NULL DEFAULT '默认',
-        pinned INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL DEFAULT (datetime('now')),
-        updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-        deleted_at TEXT
-      );
-    `
-  }).catch(() => {
-    // 如果 rpc 不可用，尝试直接创建
-    return client.from('notes').select('id').limit(1);
-  });
-  
-  // 创建 vault_entries 表
-  await client.from('vault_entries').select('id').limit(1).catch(() => {
-    // 如果表不存在，后续操作会失败，需要用户手动创建
-  });
-}
-
-// 在模块加载时尝试初始化
-if (typeof window === 'undefined') {
-  // 服务端：延迟初始化
-  setTimeout(() => ensureTables().catch(console.error), 100);
-}
-
 function toVaultEntry(row: any): VaultEntryData {
   return { 
     ...row,

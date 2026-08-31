@@ -51,7 +51,6 @@ function VaultShell() {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [mode, setMode] = useState<'supabase' | 'sqlite'>('supabase');
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [totalEntries, setTotalEntries] = useState(0);
@@ -64,10 +63,6 @@ function VaultShell() {
     let mounted = true;
     (async () => {
       try {
-        // 加载存储模式
-        const modeRes = await fetch('/api/storage-mode');
-        const modeData = await modeRes.json();
-        if (mounted) setMode(modeData.mode);
         const token = localStorage.getItem('local_token');
         if (token) {
           const res = await fetch('/api/auth/me', {
@@ -228,31 +223,6 @@ function VaultShell() {
     } finally {
       window.location.href = '/login';
     }
-  }
-
-  async function syncLocalToCloud() {
-    const token = localStorage.getItem('local_token');
-    if (!token) { toast.error('未登录'); return; }
-
-    const doSync = async () => {
-      const res = await fetch('/api/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-session': token },
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        toast.error(text || '同步请求失败');
-        return;
-      }
-      const data = await res.json();
-      if (data.needCloudRegister) {
-        toast.error('请先切换到云端模式注册账号，再回来同步');
-        return;
-      }
-      if (data.success) toast.success(data.message);
-      else toast.error(data.error || '同步失败');
-    };
-    await doSync();
   }
 
   function addCustomCategory() {
@@ -523,15 +493,8 @@ function VaultShell() {
                   <EntryRow
                     key={e.id}
                     entry={e}
-                    mode={mode}
                     revealed={!!revealed[e.id]}
-                    onToggleReveal={() => {
-                      if (mode === 'sqlite') {
-                        syncLocalToCloud();
-                      } else {
-                        setRevealed((r) => ({ ...r, [e.id]: !r[e.id] }));
-                      }
-                    }}
+                    onToggleReveal={() => setRevealed((r) => ({ ...r, [e.id]: !r[e.id] }))}
                     onCopyUsername={() => e.username && copyText(e.username, '用户名')}
                     onCopyPassword={() => e.password && copyText(e.password, '密码')}
                     onEdit={() => openEdit(e)}
@@ -648,7 +611,6 @@ function CategoryButton({
 
 function EntryRow({
   entry,
-  mode,
   revealed,
   onToggleReveal,
   onCopyUsername,
@@ -657,7 +619,6 @@ function EntryRow({
   onDelete,
 }: {
   entry: VaultEntry;
-  mode: 'supabase' | 'sqlite';
   revealed: boolean;
   onToggleReveal: () => void;
   onCopyUsername: () => void;
@@ -695,15 +656,11 @@ function EntryRow({
       </div>
 
       <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-        {mode === 'sqlite' ? (
-          <IconButton title="同步到云端" onClick={onToggleReveal} icon={<Upload size={14} />} />
-        ) : (
-          <IconButton
-            title={revealed ? '隐藏密码' : '显示密码'}
-            onClick={onToggleReveal}
-            icon={revealed ? <EyeOff size={14} /> : <Eye size={14} />}
-          />
-        )}
+        <IconButton
+          title={revealed ? '隐藏密码' : '显示密码'}
+          onClick={onToggleReveal}
+          icon={revealed ? <EyeOff size={14} /> : <Eye size={14} />}
+        />
         {entry.username && (
           <IconButton title="复制用户名" onClick={onCopyUsername} icon={<Copy size={14} />} />
         )}

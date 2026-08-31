@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, EyeOff, LogIn, Database, Cloud } from 'lucide-react';
+import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -20,14 +20,6 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'supabase' | 'sqlite'>('supabase');
-
-  useEffect(() => {
-    fetch('/api/storage-mode')
-      .then((r) => r.json())
-      .then((d) => d.mode && setMode(d.mode))
-      .catch(() => {});
-  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -61,37 +53,8 @@ function LoginForm() {
     }
   };
 
-  async function toggleMode() {
-    const newMode = mode === 'supabase' ? 'sqlite' : 'supabase';
-    try {
-      const res = await fetch('/api/storage-mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: newMode }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMode(newMode);
-        toast.success(data.message);
-      }
-    } catch { /* ignore */ }
-  }
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      {/* Mode switch */}
-      <div className="flex justify-center mb-2">
-        <button
-          type="button"
-          onClick={toggleMode}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
-        >
-          {mode === 'supabase' ? <Cloud size={12} /> : <Database size={12} />}
-          <span>{mode === 'supabase' ? '☁️ 云端模式' : '💻 本地模式'}</span>
-          <span className="text-[10px] opacity-50">点击切换</span>
-        </button>
-      </div>
-
       <div className="flex flex-col gap-2">
         <Label htmlFor="email" className="text-sm font-serif-display tracking-wide">
           邮箱
@@ -148,13 +111,10 @@ function LoginForm() {
         )}
       </Button>
 
-      <div className="text-center text-sm text-muted-foreground mt-2">
-        还没有账号？
-        <Link
-          href="/register"
-          className="ml-1 font-serif-display tracking-wide text-foreground hover-underline-reveal"
-        >
-          去注册
+      <div className="text-center text-xs text-muted-foreground">
+        还没有账号？{' '}
+        <Link href="/register" className="hover-underline-reveal text-primary">
+          立即注册
         </Link>
       </div>
     </form>
@@ -164,27 +124,19 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <AuthGuard requireAuth={false}>
-      <div className="flex min-h-screen items-center justify-center px-4 py-12">
-        <div className="w-full max-w-[420px] card-texture border border-border rounded-lg bg-card p-10 shadow-2xl animate-fade-in-up">
-          <div className="flex flex-col items-center gap-3 mb-8">
-            <Image
-              src="/logo.svg"
-              alt={APP_NAME}
-              width={56}
-              height={56}
-              className="rounded-md"
-              unoptimized
-              priority
-            />
-            <h1 className="text-2xl font-serif-display tracking-wide text-foreground">
-              {APP_NAME}
-            </h1>
-            <p className="text-xs text-muted-foreground tracking-widest uppercase">
-              Welcome back
-            </p>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+              <Image src="/logo.svg" alt="Logo" width={32} height={32} />
+            </div>
+            <h1 className="text-2xl font-serif-display tracking-wider">{APP_NAME}</h1>
+            <p className="text-sm text-muted-foreground mt-2">安全存储您的密码</p>
           </div>
 
-          <LoginForm />
+          <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6">
+            <LoginForm />
+          </div>
         </div>
       </div>
     </AuthGuard>

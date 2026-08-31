@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Eye, EyeOff, UserPlus, Database, Cloud } from 'lucide-react';
+import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -21,14 +21,6 @@ function RegisterForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'supabase' | 'sqlite'>('supabase');
-
-  useEffect(() => {
-    fetch('/api/storage-mode')
-      .then((r) => r.json())
-      .then((d) => d.mode && setMode(d.mode))
-      .catch(() => {});
-  }, []);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -71,36 +63,8 @@ function RegisterForm() {
     }
   };
 
-  async function toggleMode() {
-    const newMode = mode === 'supabase' ? 'sqlite' : 'supabase';
-    try {
-      const res = await fetch('/api/storage-mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: newMode }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMode(newMode);
-        toast.success(data.message);
-      }
-    } catch { /* ignore */ }
-  }
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-      <div className="flex justify-center mb-2">
-        <button
-          type="button"
-          onClick={toggleMode}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-border text-xs text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
-        >
-          {mode === 'supabase' ? <Cloud size={12} /> : <Database size={12} />}
-          <span>{mode === 'supabase' ? '☁️ 云端模式' : '💻 本地模式'}</span>
-          <span className="text-[10px] opacity-50">点击切换</span>
-        </button>
-      </div>
-
       <div className="flex flex-col gap-2">
         <Label htmlFor="email" className="text-sm font-serif-display tracking-wide">
           邮箱
@@ -199,12 +163,10 @@ export default function RegisterPage() {
               unoptimized
               priority
             />
-            <h1 className="text-2xl font-serif-display tracking-wide text-foreground">
-              {APP_NAME}
-            </h1>
-            <p className="text-xs text-muted-foreground tracking-widest uppercase">
-              Create your vault
-            </p>
+            <div className="text-center">
+              <h1 className="text-2xl font-serif-display tracking-wider">{APP_NAME}</h1>
+              <p className="text-xs text-muted-foreground mt-1">创建账号开始使用</p>
+            </div>
           </div>
 
           <RegisterForm />
