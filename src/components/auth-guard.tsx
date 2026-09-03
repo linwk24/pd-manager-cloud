@@ -21,9 +21,24 @@ export function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
       try {
         // 检查是否 SQLite 模式（通过 localStorage token）
         const localToken = localStorage.getItem('local_token');
-        let isAuthed = !!localToken;
+        let isAuthed = false;
 
-        if (!localToken) {
+        if (localToken) {
+          // SQLite 模式：直接调 /api/auth/me 验证 token 有效性，过期会拿到 401
+          try {
+            const res = await fetch('/api/auth/me', {
+              headers: { 'x-session': localToken },
+            });
+            if (res.ok) {
+              isAuthed = true;
+            } else if (res.status === 401) {
+              // token 已失效，清掉避免后续无效请求
+              localStorage.removeItem('local_token');
+            }
+          } catch {
+            isAuthed = false;
+          }
+        } else {
           // Supabase 模式
           try {
             const mod = await import('@/lib/supabase-browser');
@@ -38,7 +53,8 @@ export function AuthGuard({ children, requireAuth = true }: AuthGuardProps) {
         if (!mounted) return;
 
         if (requireAuth && !isAuthed) {
-          router.replace('/login');
+          const from = encodeURIComponent(window.location.pathname + window.location.search);
+          router.replace(`/login?from=${from}`);
           return;
         }
         if (!requireAuth && isAuthed) {

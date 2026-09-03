@@ -160,3 +160,7 @@ Desktop.ini
 *.tsbuildinfo
 # Misc
 .coze-logs
+
+# Cloudflare / Wrangler local state
+.wrangler/
+open-next.config.js.bak

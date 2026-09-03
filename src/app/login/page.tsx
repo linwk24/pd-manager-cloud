@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
@@ -14,8 +15,23 @@ import { AuthGuard } from '@/components/auth-guard';
 
 const APP_NAME = '密码管家';
 
+/** 只接受同源相对路径（防开放重定向到外部站点）*/
+function getSafeRedirectPath(raw: string | null): string {
+  if (!raw) return '/vault';
+  let p: string;
+  try {
+    p = decodeURIComponent(raw);
+  } catch {
+    return '/vault';
+  }
+  // 必须以 / 开头，但不能是 //（协议相对 URL）
+  if (!p.startsWith('/') || p.startsWith('//')) return '/vault';
+  return p;
+}
+
 function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +61,9 @@ function LoginForm() {
       // 保存 token 到 localStorage
       localStorage.setItem('local_token', data.token);
 
-      router.replace('/vault');
+      // 登录后跳回 from 指定的页面（认证失败时记录的来源页）
+      const redirectTo = getSafeRedirectPath(searchParams.get('from'));
+      router.replace(redirectTo);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : '登录失败，请稍后重试');
     } finally {
@@ -135,7 +153,9 @@ export default function LoginPage() {
           </div>
 
           <div className="bg-card/50 backdrop-blur-sm border border-border rounded-lg p-6">
-            <LoginForm />
+            <Suspense fallback={null}>
+              <LoginForm />
+            </Suspense>
           </div>
         </div>
       </div>

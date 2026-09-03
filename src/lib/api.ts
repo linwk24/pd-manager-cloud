@@ -28,7 +28,7 @@ async function getToken(): Promise<string> {
   return session.access_token;
 }
 
-async function authedFetch(
+export async function authedFetch(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
@@ -39,7 +39,41 @@ async function authedFetch(
     headers.set('Content-Type', 'application/json');
   }
   const res = await fetch(path, { ...init, headers });
+
+  // 401 统一处理：清 token + 跳登录页（带 from 参数，登录后可回原页）
+  if (res.status === 401 && typeof window !== 'undefined') {
+    handleAuthFailure();
+  }
   return res;
+}
+
+/**
+ * 认证失败处理：清掉本地 token，强制跳到登录页。
+ * - 避免在已经处于 /login 路径时重复跳转
+ * - 带 from 参数，登录页可选择登录后跳回原页面
+ * - 防止并发请求触发多次跳转（用 flag + 原生 confirm 兼容 SSR 安全）
+ */
+let authFailureHandled = false;
+function handleAuthFailure(): void {
+  if (authFailureHandled) return;
+  authFailureHandled = true;
+
+  try {
+    localStorage.removeItem('local_token');
+  } catch {
+    /* ignore */
+  }
+
+  // 简单判断当前是否已经在 /login
+  if (!window.location.pathname.startsWith('/login')) {
+    const from = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = `/login?from=${from}`;
+  }
+
+  // 1.5s 后允许再次处理（避免登录后短期内又被旧 401 触发）
+  setTimeout(() => {
+    authFailureHandled = false;
+  }, 1500);
 }
 
 export interface PaginatedResponse<T> {
@@ -381,6 +415,10 @@ export async function importData(file: File): Promise<ImportResult> {
     headers: { 'x-session': token },
     body: formData,
   });
+
+  if (res.status === 401 && typeof window !== 'undefined') {
+    handleAuthFailure();
+  }
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: '导入失败' }));

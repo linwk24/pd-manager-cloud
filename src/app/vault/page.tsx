@@ -29,7 +29,7 @@ import { AuthGuard } from '@/components/auth-guard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EntryForm, EntryFormValues } from '@/components/vault/entry-form';
-import { VaultEntry, listEntries, createEntry, updateEntry, deleteEntry, exportData, importData } from '@/lib/api';
+import { authedFetch, VaultEntry, listEntries, createEntry, updateEntry, deleteEntry, exportData, importData } from '@/lib/api';
 import { Pagination } from '@/components/pagination';
 
 const CATEGORY_KEY = 'vault.customCategories.v1';
@@ -65,12 +65,15 @@ function VaultShell() {
       try {
         const token = localStorage.getItem('local_token');
         if (token) {
-          const res = await fetch('/api/auth/me', {
-            headers: { 'x-session': token }
-          });
+          const res = await authedFetch('/api/auth/me');
           const data = await res.json();
           if (!mounted) return;
-          setUserEmail(data.user?.email ?? null);
+          // 401 已被 authedFetch 拦截处理（跳 /login），这里只处理正常响应
+          if (res.ok) {
+            setUserEmail(data.user?.email ?? null);
+          } else {
+            setUserEmail(null);
+          }
         } else {
           // 降级到旧版 Supabase auth
           const supabase = await getSupabaseBrowserClientWithRetry();
