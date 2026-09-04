@@ -195,6 +195,32 @@
   .hover-underline-reveal:hover::after {
     width: 100%;
   }
+  /* Safe area utilities for iPhone notch / home indicator */
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .safe-left {
+    padding-left: env(safe-area-inset-left, 0);
+  }
+  .safe-right {
+    padding-right: env(safe-area-inset-right, 0);
+  }
+  /* Touch target: ensure at least 40px on touch devices (avoid accidental miss-taps) */
+  @media (hover: none) {
+    button,
+    [role='button'],
+    a[role='button'] {
+      min-height: 40px;
+    }
+  }
+  /* Prevent text-size inflation on iOS landscape orientation */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   /* Scrollbar */
   ::-webkit-scrollbar {
     width: 8px;

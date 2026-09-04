@@ -151,7 +151,7 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <AuthGuard requireAuth={false}>
-      <div className="flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="flex min-h-screen items-center justify-center px-4 py-8 sm:py-12 safe-top safe-bottom">
         <div className="w-full max-w-[420px] card-texture border border-border rounded-lg bg-card p-10 shadow-2xl animate-fade-in-up">
           <div className="flex flex-col items-center gap-3 mb-8">
             <Image

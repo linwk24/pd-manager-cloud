@@ -21,6 +21,7 @@ import {
   FileJson,
   FileText,
   ChevronDown,
+  MoreVertical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -55,6 +56,7 @@ function VaultShell() {
   const [importing, setImporting] = useState(false);
   const [totalEntries, setTotalEntries] = useState(0);
   const [currentOffset, setCurrentOffset] = useState(0);
+  const [mobileMenuOpenFor, setMobileMenuOpenFor] = useState<string | null>(null);
   const PAGE_SIZE = 50;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -298,15 +300,16 @@ function VaultShell() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top bar */}
-      <header className="border-b border-border bg-card/40 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
-          <div className="flex items-center gap-2.5">
+      {/* Top bar - mobile: 2 rows (logo+actions / search); desktop: 1 row */}
+      <header className="border-b border-border bg-card/40 backdrop-blur-sm sticky top-0 z-30 safe-top">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center gap-3 sm:gap-6">
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
             <Image src="/logo.svg" alt="logo" width={28} height={28} className="rounded" unoptimized />
-            <span className="font-serif-display text-lg tracking-wide">密码管家</span>
+            <span className="font-serif-display text-base sm:text-lg tracking-wide">密码管家</span>
           </div>
 
-          <div className="flex-1 max-w-md relative">
+          {/* Search: desktop inline, mobile below */}
+          <div className="hidden sm:block flex-1 max-w-md relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="搜索标题、用户名、网址、备注..."
@@ -316,17 +319,30 @@ function VaultShell() {
             />
           </div>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Notes link - desktop only, mobile goes in user menu */}
             <a
               href="/notes"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider flex items-center gap-1"
+              className="hidden sm:flex text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider items-center gap-1"
             >
               <NotebookText size={14} />
               笔记
             </a>
 
-            {/* Export/Import dropdown */}
-            <div className="relative">
+            {/* Mobile: search moved to second row below the top bar (visible) */}
+
+            {/* New entry button - mobile compact icon only */}
+            <Button
+              onClick={openCreate}
+              size="sm"
+              className="sm:hidden h-9 w-9 p-0"
+              aria-label="新增条目"
+            >
+              <Plus size={16} />
+            </Button>
+
+            {/* Export/Import dropdown - desktop only, mobile in user menu */}
+            <div className="relative hidden sm:block">
               <button
                 onClick={() => setExportMenuOpen(!exportMenuOpen)}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider flex items-center gap-1 h-9 px-3 rounded-md border border-border bg-card/60 hover:bg-accent/40"
@@ -379,23 +395,58 @@ function VaultShell() {
               onChange={handleImportFile}
             />
 
-            <div className="text-xs text-muted-foreground hidden sm:block">
+            <div className="text-xs text-muted-foreground hidden lg:flex items-center">
               <ShieldCheck size={12} className="inline-block mr-1.5 -mt-0.5" />
               仅本机登录可见
             </div>
             <div className="relative group">
-              <button className="h-9 px-3 flex items-center gap-2 rounded-md border border-border bg-card/60 hover:bg-accent/40 transition-colors">
+              <button
+                aria-label="用户菜单"
+                className="h-9 px-2 sm:px-3 flex items-center gap-2 rounded-md border border-border bg-card/60 hover:bg-accent/40 transition-colors"
+              >
                 <span className="h-6 w-6 rounded-full bg-primary/30 text-primary-foreground flex items-center justify-center text-xs font-serif-display">
                   {(userEmail ?? '?').charAt(0).toUpperCase()}
                 </span>
-                <span className="text-xs text-muted-foreground max-w-[160px] truncate">
+                <span className="hidden sm:inline text-xs text-muted-foreground max-w-[160px] truncate">
                   {userEmail ?? '加载中...'}
                 </span>
               </button>
-              <div className="absolute right-0 top-full mt-1 w-44 bg-popover border border-border rounded-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity">
+              <div className="absolute right-0 top-full mt-1 w-48 bg-popover border border-border rounded-md shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity">
+                {/* Mobile-only: links that are too cramped for the top bar */}
+                <a
+                  href="/notes"
+                  className="sm:hidden w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors rounded-t-md"
+                >
+                  <NotebookText size={14} />
+                  <span>笔记</span>
+                </a>
+                <div className="sm:hidden border-t border-border" />
+                <button
+                  onClick={() => handleExport('json')}
+                  className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors"
+                >
+                  <FileJson size={14} />
+                  <span>导出 JSON</span>
+                </button>
+                <button
+                  onClick={() => handleExport('csv')}
+                  className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors"
+                >
+                  <FileText size={14} />
+                  <span>导出 CSV</span>
+                </button>
+                <button
+                  onClick={handleImportClick}
+                  disabled={importing}
+                  className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors disabled:opacity-50"
+                >
+                  <Upload size={14} />
+                  <span>{importing ? '导入中...' : '导入数据'}</span>
+                </button>
+                <div className="border-t border-border" />
                 <button
                   onClick={() => setConfirmLogout(true)}
-                  className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors rounded-md"
+                  className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors rounded-b-md"
                 >
                   <LogOut size={14} />
                   <span>登出</span>
@@ -404,11 +455,75 @@ function VaultShell() {
             </div>
           </div>
         </div>
+
+        {/* Mobile search bar (full width, second row) */}
+        <div className="sm:hidden border-t border-border/50 px-4 py-2">
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="搜索标题、用户名、网址、备注..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-9 pl-9 bg-input/40 w-full"
+            />
+          </div>
+        </div>
       </header>
 
-      <div className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-8">
-        {/* Sidebar */}
-        <aside>
+      {/* Mobile categories chip strip (md-) */}
+      <div className="md:hidden border-b border-border/50 bg-card/20">
+        <div className="flex items-center gap-2 overflow-x-auto px-4 py-2.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <ChipButton
+            label="全部"
+            count={categoryCounts.get('全部') ?? 0}
+            active={activeCategory === '全部'}
+            onClick={() => setActiveCategory('全部')}
+          />
+          {allCategories.map((c) => (
+            <ChipButton
+              key={c}
+              label={c}
+              count={categoryCounts.get(c) ?? 0}
+              active={activeCategory === c}
+              onClick={() => setActiveCategory(c)}
+            />
+          ))}
+          {showNewCategory ? (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Input
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') addCustomCategory();
+                  if (e.key === 'Escape') setShowNewCategory(false);
+                }}
+                placeholder="新分类"
+                className="h-7 w-24 bg-input/40 text-xs"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={addCustomCategory}
+                className="h-7 w-7 rounded-md bg-accent/60 text-sm flex items-center justify-center"
+                aria-label="确认"
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowNewCategory(true)}
+              className="shrink-0 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-dashed border-border transition-colors"
+            >
+              <Plus size={12} /> 新建
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-8 grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4 sm:gap-8">
+        {/* Sidebar - desktop only, mobile uses chip strip above */}
+        <aside className="hidden md:block">
           <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-3 font-serif-display">
             分类
           </div>
@@ -465,13 +580,13 @@ function VaultShell() {
         </aside>
 
         {/* Main */}
-        <main>
-          <div className="flex items-end justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-serif-display tracking-wide">
+        <main className="min-w-0">
+          <div className="flex items-end justify-between mb-4 sm:mb-6 gap-2">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-serif-display tracking-wide truncate">
                 {activeCategory === '全部' ? '全部条目' : activeCategory}
               </h1>
-              <p className="text-xs text-muted-foreground mt-1 tracking-wider">
+              <p className="text-xs text-muted-foreground mt-1 tracking-wider truncate">
                 {loading
                   ? '正在取出您的密码...'
                   : filteredEntries.length > 0
@@ -479,7 +594,7 @@ function VaultShell() {
                     : '这里还很安静'}
               </p>
             </div>
-            <Button onClick={openCreate} className="font-serif-display tracking-wider">
+            <Button onClick={openCreate} className="hidden sm:inline-flex font-serif-display tracking-wider shrink-0">
               <Plus size={14} className="mr-1.5" />
               新增条目
             </Button>
@@ -502,6 +617,8 @@ function VaultShell() {
                     onCopyPassword={() => e.password && copyText(e.password, '密码')}
                     onEdit={() => openEdit(e)}
                     onDelete={() => setConfirmDelete(e)}
+                    mobileMenuOpen={mobileMenuOpenFor === e.id}
+                    onMobileMenuToggle={() => setMobileMenuOpenFor(mobileMenuOpenFor === e.id ? null : e.id)}
                   />
                 ))}
               </ul>
@@ -554,6 +671,33 @@ function VaultShell() {
         />
       )}
     </div>
+  );
+}
+
+function ChipButton({
+  label,
+  count,
+  active,
+  onClick,
+}: {
+  label: string;
+  count: number;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all border ${
+        active
+          ? 'bg-primary/15 border-primary/40 text-foreground'
+          : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent/30'
+      }`}
+    >
+      <Folder size={11} className={active ? 'text-primary' : ''} />
+      <span>{label}</span>
+      <span className="text-[10px] opacity-60 font-mono-pretty">{count}</span>
+    </button>
   );
 }
 
@@ -620,6 +764,8 @@ function EntryRow({
   onCopyPassword,
   onEdit,
   onDelete,
+  mobileMenuOpen,
+  onMobileMenuToggle,
 }: {
   entry: VaultEntry;
   revealed: boolean;
@@ -628,28 +774,30 @@ function EntryRow({
   onCopyPassword: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  mobileMenuOpen: boolean;
+  onMobileMenuToggle: () => void;
 }) {
   return (
-    <li className="group border border-border rounded-md bg-card/50 hover:bg-card/80 transition-colors px-4 py-3 flex items-center gap-4">
+    <li className="group border border-border rounded-md bg-card/50 hover:bg-card/80 transition-colors px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-4">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <h3 className="font-serif-display text-base tracking-wide truncate">{entry.title}</h3>
           {entry.category && (
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground border border-border rounded px-1.5 py-0.5">
+            <span className="hidden sm:inline-block text-[10px] uppercase tracking-widest text-muted-foreground border border-border rounded px-1.5 py-0.5 shrink-0">
               {entry.category}
             </span>
           )}
         </div>
-        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3 truncate">
-          {entry.username && <span className="truncate">{entry.username}</span>}
+        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-3 min-w-0">
+          {entry.username && <span className="truncate min-w-0">{entry.username}</span>}
           {entry.url && (
             <>
-              <span className="opacity-40">·</span>
+              <span className="opacity-40 shrink-0">·</span>
               <a
                 href={entry.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover-underline-reveal truncate"
+                className="hover-underline-reveal truncate min-w-0 hidden sm:inline-block"
               >
                 {entry.url}
               </a>
@@ -658,22 +806,77 @@ function EntryRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1 shrink-0">
+        {/* Mobile: only show reveal button + overflow menu */}
         <IconButton
           title={revealed ? '隐藏密码' : '显示密码'}
           onClick={onToggleReveal}
           icon={revealed ? <EyeOff size={14} /> : <Eye size={14} />}
         />
-        {entry.username && (
-          <IconButton title="复制用户名" onClick={onCopyUsername} icon={<Copy size={14} />} />
-        )}
-        <IconButton
-          title="复制密码（请在弹窗中确认）"
-          onClick={onCopyPassword}
-          icon={<KeyRound size={14} />}
-        />
-        <IconButton title="编辑" onClick={onEdit} icon={<Pencil size={14} />} />
-        <IconButton title="删除" onClick={onDelete} icon={<Trash2 size={14} />} danger />
+        {/* Desktop: all actions visible */}
+        <div className="hidden sm:flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+          {entry.username && (
+            <IconButton title="复制用户名" onClick={onCopyUsername} icon={<Copy size={14} />} />
+          )}
+          <IconButton
+            title="复制密码（请在弹窗中确认）"
+            onClick={onCopyPassword}
+            icon={<KeyRound size={14} />}
+          />
+          <IconButton title="编辑" onClick={onEdit} icon={<Pencil size={14} />} />
+          <IconButton title="删除" onClick={onDelete} icon={<Trash2 size={14} />} danger />
+        </div>
+        {/* Mobile: overflow menu */}
+        <div className="sm:hidden relative">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onMobileMenuToggle();
+            }}
+            className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/40 transition-colors"
+            aria-label="更多操作"
+          >
+            <MoreVertical size={14} />
+          </button>
+          {mobileMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={onMobileMenuToggle} />
+              <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border rounded-md shadow-xl z-20">
+                {entry.username && (
+                  <button
+                    onClick={() => { onCopyUsername(); onMobileMenuToggle(); }}
+                    className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors rounded-t-md"
+                  >
+                    <Copy size={14} />
+                    <span>复制用户名</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => { onCopyPassword(); onMobileMenuToggle(); }}
+                  className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors"
+                >
+                  <KeyRound size={14} />
+                  <span>复制密码</span>
+                </button>
+                <div className="border-t border-border" />
+                <button
+                  onClick={() => { onEdit(); onMobileMenuToggle(); }}
+                  className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors"
+                >
+                  <Pencil size={14} />
+                  <span>编辑</span>
+                </button>
+                <button
+                  onClick={() => { onDelete(); onMobileMenuToggle(); }}
+                  className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 text-destructive transition-colors rounded-b-md"
+                >
+                  <Trash2 size={14} />
+                  <span>删除</span>
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </li>
   );

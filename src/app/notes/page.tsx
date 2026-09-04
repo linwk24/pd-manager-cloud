@@ -28,6 +28,8 @@ import {
   XCircle,
   LayoutGrid,
   LayoutList,
+  MoreVertical,
+  Shield,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -68,6 +70,7 @@ function NotesShell() {
   // Export/Import
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [totalNotes, setTotalNotes] = useState(0);
   const [currentOffset, setCurrentOffset] = useState(0);
   const PAGE_SIZE = 50;
@@ -382,20 +385,22 @@ function NotesShell() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top bar */}
-      <header className="border-b border-border bg-card/40 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <NotebookText size={20} className="text-primary" />
-            <h1 className="font-serif-display text-lg tracking-wide">笔记</h1>
+      <header className="border-b border-border bg-card/40 backdrop-blur-sm sticky top-0 z-30 safe-top">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+            <NotebookText size={20} className="text-primary shrink-0" />
+            <h1 className="font-serif-display text-base sm:text-lg tracking-wide truncate">笔记</h1>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Trash button */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Trash button - desktop full, mobile icon only */}
             <button
               onClick={loadTrash}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider h-9 px-3 rounded-md border border-border bg-card/60 hover:bg-accent/40 flex items-center gap-1"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider h-9 w-9 sm:w-auto sm:px-3 rounded-md border border-border bg-card/60 hover:bg-accent/40 flex items-center justify-center sm:gap-1"
+              title="回收站"
+              aria-label="回收站"
             >
               <Trash2Icon size={14} />
-              回收站
+              <span className="hidden sm:inline">回收站</span>
             </button>
 
             {/* Select mode button */}
@@ -407,29 +412,98 @@ function NotesShell() {
                   setSelectMode(true);
                 }
               }}
-              className={`text-xs tracking-wider h-9 px-3 rounded-md border flex items-center gap-1 transition-colors ${
+              className={`text-xs tracking-wider h-9 w-9 sm:w-auto sm:px-3 rounded-md border flex items-center justify-center sm:gap-1 transition-colors ${
                 selectMode
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'text-muted-foreground hover:text-foreground border-border bg-card/60 hover:bg-accent/40'
               }`}
+              title={selectMode ? '取消' : '选择'}
+              aria-label={selectMode ? '取消' : '选择'}
             >
               {selectMode ? <X size={14} /> : <CheckSquare size={14} />}
-              {selectMode ? '取消' : '选择'}
+              <span className="hidden sm:inline">{selectMode ? '取消' : '选择'}</span>
             </button>
 
             {/* Batch delete button */}
             {selectMode && selectedNotes.size > 0 && (
               <button
                 onClick={batchDelete}
-                className="text-xs text-red-500 hover:text-red-600 transition-colors tracking-wider h-9 px-3 rounded-md border border-red-200 bg-red-50 hover:bg-red-100 flex items-center gap-1"
+                className="text-xs text-red-500 hover:text-red-600 transition-colors tracking-wider h-9 w-9 sm:w-auto sm:px-3 rounded-md border border-red-200 bg-red-50 hover:bg-red-100 flex items-center justify-center sm:gap-1"
+                title={`删除选中 (${selectedNotes.size})`}
               >
                 <Trash2 size={14} />
-                删除 ({selectedNotes.size})
+                <span className="hidden sm:inline">删除 ({selectedNotes.size})</span>
               </button>
             )}
 
-            {/* Export/Import dropdown */}
-            <div className="relative">
+            {/* Mobile: More menu (returns + backup + user info + logout) */}
+            <div className="relative sm:hidden">
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="h-9 w-9 flex items-center justify-center rounded-md border border-border bg-card/60 hover:bg-accent/40 text-muted-foreground"
+                aria-label="更多"
+              >
+                <MoreVertical size={14} />
+              </button>
+              {mobileMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMobileMenuOpen(false)} />
+                  <div className="absolute right-0 top-full mt-1 w-52 bg-popover border border-border rounded-md shadow-xl z-20">
+                    <a
+                      href="/vault"
+                      className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors rounded-t-md"
+                    >
+                      <Shield size={14} />
+                      <span>返回保险箱</span>
+                    </a>
+                    <div className="border-t border-border" />
+                    <button
+                      onClick={() => { handleExport('pdf'); setMobileMenuOpen(false); }}
+                      className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors"
+                    >
+                      <FileCode size={14} />
+                      <span>导出 HTML</span>
+                    </button>
+                    <button
+                      onClick={() => { handleExport('json'); setMobileMenuOpen(false); }}
+                      className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors"
+                    >
+                      <FileJson size={14} />
+                      <span>导出 JSON</span>
+                    </button>
+                    <button
+                      onClick={() => { handleExport('csv'); setMobileMenuOpen(false); }}
+                      className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors"
+                    >
+                      <Table size={14} />
+                      <span>导出 CSV</span>
+                    </button>
+                    <button
+                      onClick={() => { handleImportClick(); setMobileMenuOpen(false); }}
+                      disabled={importing}
+                      className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors disabled:opacity-50"
+                    >
+                      <Upload size={14} />
+                      <span>{importing ? '导入中...' : '导入数据'}</span>
+                    </button>
+                    <div className="border-t border-border" />
+                    <div className="px-3 py-2 text-xs text-muted-foreground truncate">
+                      {userEmail ?? '加载中...'}
+                    </div>
+                    <button
+                      onClick={() => { setConfirmLogout(true); setMobileMenuOpen(false); }}
+                      className="w-full px-3 py-2.5 text-left text-sm flex items-center gap-2 hover:bg-accent/40 transition-colors rounded-b-md text-destructive"
+                    >
+                      <LogOut size={14} />
+                      <span>登出</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Export/Import dropdown - desktop only */}
+            <div className="relative hidden sm:block">
               <button
                 onClick={() => setExportMenuOpen(!exportMenuOpen)}
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider h-9 px-3 rounded-md border border-border bg-card/60 hover:bg-accent/40 flex items-center gap-1"
@@ -493,15 +567,16 @@ function NotesShell() {
 
             <a
               href="/vault"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider"
+              className="hidden sm:inline-block text-xs text-muted-foreground hover:text-foreground transition-colors tracking-wider"
             >
               ← 返回保险箱
             </a>
-            <span className="text-xs text-muted-foreground">{userEmail}</span>
+            <span className="hidden lg:inline text-xs text-muted-foreground max-w-[160px] truncate">{userEmail}</span>
             <button
               onClick={() => setConfirmLogout(true)}
-              className="text-muted-foreground hover:text-foreground transition-colors"
+              className="hidden sm:flex h-9 w-9 text-muted-foreground hover:text-foreground transition-colors items-center justify-center"
               title="退出登录"
+              aria-label="退出登录"
             >
               <LogOut size={16} />
             </button>
@@ -509,9 +584,60 @@ function NotesShell() {
         </div>
       </header>
 
-      <div className="flex-1 flex max-w-7xl mx-auto w-full px-6 py-6 gap-6">
-        {/* Sidebar */}
-        <aside className="w-48 shrink-0 flex flex-col gap-1">
+      {/* Mobile categories chip strip (sm-) */}
+      <div className="sm:hidden border-b border-border/50 bg-card/20">
+        <div className="flex items-center gap-2 overflow-x-auto px-4 py-2.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {allCategories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-all border ${
+                activeCategory === cat
+                  ? 'bg-primary/15 border-primary/40 text-foreground'
+                  : 'border-border text-muted-foreground hover:text-foreground hover:bg-accent/30'
+              }`}
+            >
+              <Folder size={11} className={activeCategory === cat ? 'text-primary' : ''} />
+              <span>{cat}</span>
+              <span className="text-[10px] opacity-60 font-mono-pretty">{categoryCounts.get(cat) ?? 0}</span>
+            </button>
+          ))}
+          {!showNewCategory ? (
+            <button
+              onClick={() => setShowNewCategory(true)}
+              className="shrink-0 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2.5 py-1.5 rounded-full border border-dashed border-border transition-colors"
+            >
+              <Plus size={12} /> 新建
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Input
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') addCustomCategory();
+                  if (e.key === 'Escape') setShowNewCategory(false);
+                }}
+                placeholder="新分类"
+                className="h-7 w-24 bg-input/40 text-xs"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={addCustomCategory}
+                className="h-7 w-7 rounded-md bg-accent/60 text-sm flex items-center justify-center"
+                aria-label="确认"
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex-1 flex max-w-7xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 gap-4 sm:gap-6">
+        {/* Sidebar - desktop only */}
+        <aside className="hidden sm:flex w-48 shrink-0 flex-col gap-1">
           <Button
             variant="default"
             size="sm"
@@ -729,14 +855,14 @@ function NotesShell() {
       {/* Editor Modal */}
       {editorOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-4"
           onClick={() => setEditorOpen(false)}
         >
           <div
-            className="w-full max-w-2xl bg-card border border-border rounded-lg shadow-2xl max-h-[80vh] flex flex-col"
+            className="w-full max-w-2xl bg-card border border-border rounded-lg shadow-2xl max-h-[92vh] sm:max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+            <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-border flex items-center justify-between gap-2">
               <h2 className="font-serif-display text-base tracking-wide">
                 {editing ? '编辑笔记' : '新笔记'}
               </h2>
@@ -818,14 +944,14 @@ function NotesShell() {
       {/* Trash Modal */}
       {showTrash && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-4"
           onClick={() => setShowTrash(false)}
         >
           <div
-            className="w-full max-w-2xl max-h-[80vh] bg-card border border-border rounded-lg shadow-2xl flex flex-col"
+            className="w-full max-w-2xl max-h-[92vh] sm:max-h-[85vh] bg-card border border-border rounded-lg shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border gap-2">
               <div className="flex items-center gap-2">
                 <Trash2Icon size={20} className="text-muted-foreground" />
                 <h2 className="font-serif-display text-lg">回收站</h2>

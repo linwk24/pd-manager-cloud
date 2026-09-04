@@ -84,14 +84,14 @@ export function EntryForm({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in-up"
+      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-4 animate-fade-in-up"
       onClick={() => onOpenChange(false)}
     >
       <div
-        className="w-full max-w-lg bg-card border border-border rounded-lg shadow-2xl"
+        className="w-full max-w-lg bg-card border border-border rounded-lg sm:rounded-lg shadow-2xl max-h-[92vh] sm:max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-6 py-5 border-b border-border">
+        <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-border shrink-0">
           <h2 className="text-lg font-serif-display tracking-wide">
             {initial ? '编辑条目' : '新增条目'}
           </h2>
@@ -100,7 +100,7 @@ export function EntryForm({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="px-4 sm:px-6 py-4 sm:py-5 flex flex-col gap-4 overflow-y-auto flex-1 safe-bottom">
           <div className="grid grid-cols-1 gap-4">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="title" className="text-xs font-serif-display tracking-widest uppercase text-muted-foreground">
@@ -116,7 +116,7 @@ export function EntryForm({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="username" className="text-xs font-serif-display tracking-widest uppercase text-muted-foreground">
                   用户名 / 邮箱
@@ -159,7 +159,7 @@ export function EntryForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="url" className="text-xs font-serif-display tracking-widest uppercase text-muted-foreground">
                   网站
